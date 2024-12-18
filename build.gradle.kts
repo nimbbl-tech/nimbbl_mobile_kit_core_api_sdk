@@ -30,7 +30,7 @@ publishing {
     val sdkArtifactId = "nimbbl-checkout-core-sdk-java"
     val sdkGroupId = "tech.nimbbl.sdk"
     val gitlabToken = "glpat-zswGgsyUM5yVbo9yy6RG"
-    val sdkVersion = "3.0.0"
+    val sdkVersion = "3.0.2"
     val mavenRepo = "https://gitlab.com/api/v4/projects/25847308/packages/maven"
 
     publications {

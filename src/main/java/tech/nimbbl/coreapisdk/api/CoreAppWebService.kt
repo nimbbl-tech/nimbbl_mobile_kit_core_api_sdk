@@ -29,6 +29,7 @@ import tech.nimbbl.coreapisdk.models.PublicKeyResponse
 import tech.nimbbl.coreapisdk.models.ResendOtpResponse
 import tech.nimbbl.coreapisdk.models.ResolveUserResponse
 import tech.nimbbl.coreapisdk.models.UpdateTransactionResponse
+import tech.nimbbl.coreapisdk.models.checkout_details.CheckoutDetailsResponseVo
 import tech.nimbbl.coreapisdk.models.transaction_enquiry.TransactionEnquiryResponseVo
 import tech.nimbbl.coreapisdk.utils.PayloadKeys.Companion.key_fingerPrint
 import tech.nimbbl.coreapisdk.utils.PayloadKeys.Companion.key_ipAddress
@@ -164,6 +165,12 @@ interface CoreAppWebService {
         @Header("Authorization") auth: String,
         @Body inputPayload: RequestBody
     ): Response<UpdateTransactionResponse>
+
+    @GET
+    suspend fun getCheckoutDetails(
+        @Url url: String,
+        @Header("Authorization") auth: String
+    ): Response<CheckoutDetailsResponseVo>
 
 
     companion object {

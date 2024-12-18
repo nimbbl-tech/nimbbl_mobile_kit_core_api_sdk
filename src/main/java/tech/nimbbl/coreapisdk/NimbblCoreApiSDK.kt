@@ -7,6 +7,7 @@ import tech.nimbbl.coreapisdk.api.ServiceConstants.Companion.DEVICE_FINGERPRINT
 import tech.nimbbl.coreapisdk.api.ServiceConstants.Companion.FINGERPRINT
 import tech.nimbbl.coreapisdk.interfaces.NimbblPayNativeCheckoutPaymentListener
 import tech.nimbbl.coreapisdk.models.OrderResponse
+import tech.nimbbl.coreapisdk.models.checkout_details.CheckoutDetailsResponseVo
 import tech.nimbbl.coreapisdk.models.transaction_enquiry.TransactionEnquiryResponseVo
 import tech.nimbbl.coreapisdk.repository.NimbblRepository
 import tech.nimbbl.coreapisdk.repository.NimbblRepositoryImpl
@@ -32,6 +33,10 @@ class NimbblCoreApiSDK private constructor() {
 
     suspend fun updateOrder(token: String, orderId: String, callbackMode: String,platformType: String) : Response<OrderResponse>? {
         return getAPIRepositoryInstance()?.updateOrderDetails(token,orderId,callbackMode,platformType,"2.0.0")
+    }
+
+    suspend fun getCheckoutDetails(token: String) : Response<CheckoutDetailsResponseVo>? {
+        return getAPIRepositoryInstance()?.getCheckoutDetails(token)
     }
 
 

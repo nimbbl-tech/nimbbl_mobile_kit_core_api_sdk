@@ -8,6 +8,7 @@ import retrofit2.Response
 import tech.nimbbl.coreapisdk.api.CoreAppWebService
 import tech.nimbbl.coreapisdk.api.ServiceConstants.Companion.BASE_URL
 import tech.nimbbl.coreapisdk.api.ServiceConstants.Companion.CHECKOUT_CANCEL
+import tech.nimbbl.coreapisdk.api.ServiceConstants.Companion.CHECKOUT_DETAILS
 import tech.nimbbl.coreapisdk.api.ServiceConstants.Companion.TRANSACTION_ENQUIRY
 import tech.nimbbl.coreapisdk.api.ServiceConstants.Companion.UPDATE_ORDER
 import tech.nimbbl.coreapisdk.models.BinDataResponse
@@ -21,6 +22,7 @@ import tech.nimbbl.coreapisdk.models.PublicKeyResponse
 import tech.nimbbl.coreapisdk.models.ResendOtpResponse
 import tech.nimbbl.coreapisdk.models.ResolveUserResponse
 import tech.nimbbl.coreapisdk.models.UpdateTransactionResponse
+import tech.nimbbl.coreapisdk.models.checkout_details.CheckoutDetailsResponseVo
 import tech.nimbbl.coreapisdk.models.transaction_enquiry.TransactionEnquiryResponseVo
 import tech.nimbbl.coreapisdk.utils.PayloadKeys
 import tech.nimbbl.coreapisdk.utils.PayloadKeys.Companion.key_OrderID
@@ -365,6 +367,13 @@ class NimbblRepositoryImpl(
 
     override fun getSubMerchantPackageName(): String {
         return ""
+    }
+
+    override suspend fun getCheckoutDetails(token: String): Response<CheckoutDetailsResponseVo>? {
+        return apiService.getCheckoutDetails(
+            BASE_URL + CHECKOUT_DETAILS,
+            "Bearer $token",
+        )
     }
 
 

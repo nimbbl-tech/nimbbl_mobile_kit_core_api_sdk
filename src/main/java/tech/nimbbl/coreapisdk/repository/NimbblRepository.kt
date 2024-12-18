@@ -12,6 +12,7 @@ import tech.nimbbl.coreapisdk.models.PublicKeyResponse
 import tech.nimbbl.coreapisdk.models.ResendOtpResponse
 import tech.nimbbl.coreapisdk.models.ResolveUserResponse
 import tech.nimbbl.coreapisdk.models.UpdateTransactionResponse
+import tech.nimbbl.coreapisdk.models.checkout_details.CheckoutDetailsResponseVo
 import tech.nimbbl.coreapisdk.models.transaction_enquiry.TransactionEnquiryResponseVo
 
 /*
@@ -22,43 +23,28 @@ Copyright (c) 2022 Bigital Technologies Pvt. Ltd. All rights reserved.
 interface NimbblRepository {
 
     suspend fun updateCheckOutCancelReason(
-        token:String,
-        orderId: String,
-        cancelReason: String
+        token: String, orderId: String, cancelReason: String
     ): Response<Void>
 
 
     suspend fun getCheckOutResource(
-        url: String,
-        token: String,
-        xNimbblKey: String
+        url: String, token: String, xNimbblKey: String
     ): Response<CheckoutResourceVo>
 
     suspend fun getListOfBanks(
-        url: String,
-        token: String,
-        xNimbblKey: String,
-        orderId: String
+        url: String, token: String, xNimbblKey: String, orderId: String
     ): Response<ListOfBankResponse>
 
     suspend fun getListOfWallets(
-        url: String,
-        token: String,
-        xNimbblKey: String,
-        orderId: String
+        url: String, token: String, xNimbblKey: String, orderId: String
     ): Response<ListOfWalletResponse>
 
     suspend fun getPaymentModes(
-        url: String,
-        token: String,
-        xNimbblKey: String,
-        orderId: String,
-        userToken: String
+        url: String, token: String, xNimbblKey: String, orderId: String, userToken: String
     ): Response<PaymentModesResponse>
 
     suspend fun getOrderDetails(
-        url: String,
-        token: String
+        url: String, token: String
     ): Response<OrderResponse>
 
     suspend fun updateOrderDetails(
@@ -117,11 +103,7 @@ interface NimbblRepository {
     suspend fun getPublicKey(url: String): Response<PublicKeyResponse>
 
     suspend fun getBinData(
-        url: String,
-        token: String,
-        xNimbblKey: String,
-        orderId: String,
-        cardNo: String
+        url: String, token: String, xNimbblKey: String, orderId: String, cardNo: String
     ): Response<BinDataResponse>
 
     suspend fun updateTransactionDetail(
@@ -134,10 +116,7 @@ interface NimbblRepository {
     ): Response<UpdateTransactionResponse>
 
     suspend fun getTransactionEnquiry(
-        token: String,
-        orderId: String,
-        invoiceId: String,
-        transactionId: String
+        token: String, orderId: String, invoiceId: String, transactionId: String
     ): Response<TransactionEnquiryResponseVo>
 
     suspend fun resendOtp(
@@ -153,6 +132,7 @@ interface NimbblRepository {
     fun getSubMerchantId(): String
     fun setMerchantPackageName(packageName: String)
     fun getSubMerchantPackageName(): String
+    suspend fun getCheckoutDetails(token: String): Response<CheckoutDetailsResponseVo>?
 
 
 }

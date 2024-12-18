@@ -10,6 +10,7 @@ class ServiceConstants {
         var FINGERPRINT = ""
         var DEVICE_FINGERPRINT = ""
         const val CHECKOUT_CANCEL ="api/internal/checkout/cancel"
+        const val CHECKOUT_DETAILS ="api/internal/checkout/details"
 
         const val VERIFY_DOMAIN = "verify-domain"
         const val CHECKOUT_RESOURCE = "checkout-resources"
