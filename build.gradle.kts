@@ -18,7 +18,7 @@ tasks.named<Wrapper>("wrapper") {
     gradleVersion = "8.11.1"
 }
 
-tasks.register("prepareKotlinBuildScriptModel") {}
+/*tasks.register("prepareKotlinBuildScriptModel") {}*/
 
 tasks.withType<KotlinCompile> {
     kotlinOptions {
