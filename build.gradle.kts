@@ -6,8 +6,6 @@ plugins {
     kotlin("jvm") version "1.9.0"
 }
 
-group = "com.github.tools-nimbbl"
-version = "3.0.6-SNAPSHOT-3"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -39,9 +37,13 @@ publishing {
     publications {
         create<MavenPublication>("maven") {
             from(components["java"])
-            groupId = "com.github.tools-nimbbl" // replace with your GitHub username
-            artifactId = "nimbbl_mobile_kit_core_api_sdk"           // replace with your repo/module name
-            version = "3.0.6-SNAPSHOT-3"                // update for each build
+            groupId = "com.github.nimbbl-tech" // replace with your GitHub username
+            artifactId = "nimbbl-checkout-core-sdk-java"           // replace with your repo/module name
+            version = "3.0.6"
+            pom {
+                name.set("nimbbl-checkout-core-sdk-java")
+                description.set("Nimbbl Checkout CORE SDK JAVA")
+            }// update for each build
         }
     }
 }
