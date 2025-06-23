@@ -12,9 +12,10 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-tasks.named<Wrapper>("wrapper") {
+tasks.register<Wrapper>("nimbbl_coreapisdk_wrapper") {
     gradleVersion = "8.11.1"
 }
+
 
 /*tasks.register("prepareKotlinBuildScriptModel") {}*/
 
@@ -49,7 +50,7 @@ publishing {
 }
 
 repositories {
-    mavenCentral()
-    google()
-    maven("https://jitpack.io")
+   // mavenCentral()
+//    google()
+//    maven("https://jitpack.io")
 }
