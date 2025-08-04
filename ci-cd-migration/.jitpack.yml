@@ -1,0 +1,17 @@
+jdk:
+  - openjdk17
+
+before_install:
+  - chmod +x gradlew
+
+install:
+  - ./gradlew assembleRelease
+
+build:
+  - ./gradlew assembleRelease
+
+artifacts:
+  - build/outputs/aar/*.aar
+  - build/libs/*.jar
+
+sbt: false 

@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "../nimbbl_mobile_kit_android_webview_sdk"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../nimbbl_mobile_android_sample_app"
+		}
+	]
+}
