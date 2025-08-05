@@ -135,8 +135,4 @@ afterEvaluate {
     }
 }
 
-repositories {
-    mavenCentral()
-    google()
-    maven("https://jitpack.io")
-}
+
