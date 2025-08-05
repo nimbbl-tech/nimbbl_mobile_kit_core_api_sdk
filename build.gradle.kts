@@ -90,7 +90,7 @@ afterEvaluate {
 
                 groupId = "com.github.nimbbl-tech"
                 artifactId = "nimbbl-checkout-core-sdk"
-                version = "3.0.11"
+                version = "3.0.15"
 
                 pom {
                     name.set("nimbbl-checkout-core-sdk")
