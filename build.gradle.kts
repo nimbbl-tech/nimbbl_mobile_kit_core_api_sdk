@@ -79,29 +79,18 @@ dependencies {
     
 }
 
-// Optional: include sources in the published artifact
-val sourcesJar by tasks.registering(Jar::class) {
-    archiveClassifier.set("sources")
-    from(android.sourceSets["main"].java.srcDirs)
-}
-
 afterEvaluate {
     publishing {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
                 
-                // Include sources jar with explicit dependency
-                artifact(sourcesJar.get())
+                // The sources jar is automatically included by the Android library component
+                // No need to manually add it to avoid duplicates
 
                 groupId = "com.github.nimbbl-tech"
                 artifactId = "nimbbl-checkout-core-sdk"
                 version = "3.0.8"
-                
-                // Add explicit dependency to ensure proper task ordering
-                tasks.withType<org.gradle.api.publish.tasks.GenerateModuleMetadata> {
-                    dependsOn(sourcesJar)
-                }
 
                 pom {
                     name.set("nimbbl-checkout-core-sdk")
