@@ -19,7 +19,7 @@ object Constants {
         }
     
     // Centralized SDK Version - Single source of truth for Core API SDK
-    const val SDK_VERSION_CENTRAL = "3.0.8"
+    const val SDK_VERSION_CENTRAL = "3.0.10"
     const val sdk_version = SDK_VERSION_CENTRAL // Backward compatibility
     
     // SDK Initialization Errors
