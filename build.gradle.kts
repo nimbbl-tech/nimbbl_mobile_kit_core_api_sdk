@@ -90,13 +90,13 @@ afterEvaluate {
 
                 groupId = "com.github.nimbbl-tech"
                 artifactId = "nimbbl-checkout-core-sdk"
-                version = "3.0.8"
+                version = "3.0.9"
 
                 pom {
                     name.set("nimbbl-checkout-core-sdk")
                     description.set("Nimbbl Checkout Core SDK for Android")
-                    url.set("https://github.com/nimbbl-tech/nimbbl-mobile-kit-core-api-sdk")
-                    
+                    url.set("https://github.com/nimbbl-tech/nimbbl_mobile_kit_core_api_sdk")
+
                     licenses {
                         license {
                             name.set("MIT License")
