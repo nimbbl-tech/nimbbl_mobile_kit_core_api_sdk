@@ -11,7 +11,7 @@ pluginManagement {
         }
     }
     plugins {
-        id("com.android.library") version "8.6.1" apply false
+        id("com.android.library") version "8.10.1" apply false
         kotlin("android") version "1.9.0" apply false
     }
 }

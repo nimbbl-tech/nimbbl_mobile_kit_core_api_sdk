@@ -44,12 +44,12 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 }
 
@@ -62,7 +62,7 @@ tasks.register<Wrapper>("nimbbl_coreapisdk_wrapper") {
 
 tasks.withType<KotlinCompile> {
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 }
 
@@ -78,9 +78,11 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     implementation("com.auth0.android:jwtdecode:2.0.0")
     
-    // JAXB dependencies for JDK 11 compatibility
+    // JAXB dependencies for JDK 17 compatibility
     implementation("javax.xml.bind:jaxb-api:2.3.1")
     implementation("org.glassfish.jaxb:jaxb-runtime:2.3.1")
+    implementation("javax.activation:activation:1.1.1")
+    implementation("com.sun.xml.bind:jaxb-impl:2.3.1")
 }
 
 // Optional: include sources in the published artifact
