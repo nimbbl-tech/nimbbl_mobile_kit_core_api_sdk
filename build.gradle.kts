@@ -44,12 +44,12 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "11"
     }
 }
 
@@ -62,7 +62,7 @@ tasks.register<Wrapper>("nimbbl_coreapisdk_wrapper") {
 
 tasks.withType<KotlinCompile> {
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "11"
     }
 }
 
@@ -77,6 +77,10 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     implementation("com.auth0.android:jwtdecode:2.0.0")
+    
+    // JAXB dependencies for JDK 11 compatibility
+    implementation("javax.xml.bind:jaxb-api:2.3.1")
+    implementation("org.glassfish.jaxb:jaxb-runtime:2.3.1")
 }
 
 // Optional: include sources in the published artifact
@@ -90,6 +94,9 @@ afterEvaluate {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
+                
+                // Include sources jar
+                artifact(sourcesJar)
 
                 groupId = "com.github.nimbbl-tech"
                 artifactId = "nimbbl-checkout-core-sdk"
@@ -127,7 +134,7 @@ afterEvaluate {
 }
 
 repositories {
-   // mavenCentral()
-//    google()
-//    maven("https://jitpack.io")
+    mavenCentral()
+    google()
+    maven("https://jitpack.io")
 }
