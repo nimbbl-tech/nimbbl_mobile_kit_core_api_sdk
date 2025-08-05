@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("com.android.library") version "8.10.1"
+    id("com.android.library") version "8.11.1"
     kotlin("android") version "1.9.0"
     id("maven-publish")
 }
@@ -67,22 +67,16 @@ tasks.withType<KotlinCompile> {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("androidx.core:core-ktx:1.16.0")
+    implementation("androidx.appcompat:appcompat:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:5.1.0")
     testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    implementation("com.auth0.android:jwtdecode:2.0.0")
-    
-    // JAXB dependencies for JDK 17 compatibility
-    implementation("javax.xml.bind:jaxb-api:2.3.1")
-    implementation("org.glassfish.jaxb:jaxb-runtime:2.3.1")
-    implementation("javax.activation:activation:1.1.1")
-    implementation("com.sun.xml.bind:jaxb-impl:2.3.1")
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+    implementation("com.auth0.android:jwtdecode:2.0.2")
 }
 
 // Optional: include sources in the published artifact
@@ -97,8 +91,8 @@ afterEvaluate {
             create<MavenPublication>("release") {
                 from(components["release"])
                 
-                // Include sources jar
-                artifact(sourcesJar)
+                // Include sources jar with explicit dependency
+                artifact(sourcesJar.get())
 
                 groupId = "com.github.nimbbl-tech"
                 artifactId = "nimbbl-checkout-core-sdk"
