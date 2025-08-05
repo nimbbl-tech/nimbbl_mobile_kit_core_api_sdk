@@ -92,7 +92,7 @@ object ProcessOutputPayloads {
         errorMessage: String
     ): JSONObject {
         val outputPayload = JSONObject()
-        var tempErrorMeesage = errorMessage
+        var tempErrorMeesage: String
         try {
             try {
                 val jObjError = JSONObject(errorMessage)

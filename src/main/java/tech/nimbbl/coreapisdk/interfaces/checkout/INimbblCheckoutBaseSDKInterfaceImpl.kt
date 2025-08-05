@@ -21,7 +21,7 @@ class INimbblCheckoutBaseSDKInterfaceImpl private constructor(): INimbblCheckout
      }
 
 
-     override fun initSDK(merchantIdentifier: String, authToken: String, packageName: String) {
+     override fun initSDK(app_access_key: String, authToken: String, packageName: String) {
          TODO("Not yet implemented")
      }
 
@@ -33,7 +33,7 @@ class INimbblCheckoutBaseSDKInterfaceImpl private constructor(): INimbblCheckout
          TODO("Not yet implemented")
      }
 
-     override fun fetchPaymentModeDetails(authToken: String) {
+     override fun fetchPaymentModeDetails(orderId: String) {
          TODO("Not yet implemented")
      }
 

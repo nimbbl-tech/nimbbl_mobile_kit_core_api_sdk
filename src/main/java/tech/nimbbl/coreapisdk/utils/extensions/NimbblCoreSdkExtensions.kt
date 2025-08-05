@@ -2,6 +2,7 @@ package tech.nimbbl.coreapisdk.utils.extensions
 
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
 import org.json.JSONArray
 import org.json.JSONObject
@@ -27,16 +28,13 @@ Copyright (c) 2022 Bigital Technologies Pvt. Ltd. All rights reserved.
 
 fun printLog(tag: String, message: String) {
     if (is_debug_enabled) {
-        println(message);
+        println("[$tag] $message");
     }
 }
 
 
 fun getAPIRequestBody(jsonObject: JSONObject) =
-    RequestBody.create(
-        "application/json; charset=utf-8".toMediaTypeOrNull(),
-        jsonObject.toString()
-    )
+    jsonObject.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
 
 fun getXNimbblKey(subMerchantId: String, input: String): String {
     val md = MessageDigest.getInstance("MD5")

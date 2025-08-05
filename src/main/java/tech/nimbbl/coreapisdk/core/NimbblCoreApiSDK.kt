@@ -402,8 +402,9 @@ class NimbblCoreApiSDK private constructor() {
             }
             
             return nimbblApiRepository?.also {
-                if (it == null) {
-                    Log.e("NimbblCoreApiSDK", "Repository instance is null")
+                // Repository instance is available, log success if debug is enabled
+                if (is_debug_enabled) {
+                    Log.d("NimbblCoreApiSDK", "Repository instance is available")
                 }
             } ?: run {
                 Log.e("NimbblCoreApiSDK", "Repository instance is null, cannot proceed")

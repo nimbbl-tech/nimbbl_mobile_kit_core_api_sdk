@@ -69,7 +69,6 @@ tasks.withType<KotlinCompile> {
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
@@ -77,6 +76,7 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     implementation("com.auth0.android:jwtdecode:2.0.0")
+    
 }
 
 // Optional: include sources in the published artifact
@@ -97,6 +97,11 @@ afterEvaluate {
                 groupId = "com.github.nimbbl-tech"
                 artifactId = "nimbbl-checkout-core-sdk"
                 version = "3.0.8"
+                
+                // Add explicit dependency to ensure proper task ordering
+                tasks.withType<org.gradle.api.publish.tasks.GenerateModuleMetadata> {
+                    dependsOn(sourcesJar)
+                }
 
                 pom {
                     name.set("nimbbl-checkout-core-sdk")

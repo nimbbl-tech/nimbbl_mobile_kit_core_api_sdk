@@ -84,21 +84,22 @@ class NimbblRepositoryImpl(
             printLog("SAN", jsonStr)
             
             // Add null check for data
-            if (responseBody.data != null && responseBody.data!!.isNotEmpty()) {
-                for (data in responseBody.data!!) {
+            if (responseBody.data.isNotEmpty()) {
+                for (data in responseBody.data) {
                     // Add null check for items
                     if (data.items != null) {
                         for (items in data.items!!) {
-                            val code = items.app_code ?: items.sub_payment_code
                             // Temporarily comment out logo downloads to fix compilation
+                            // val code = items.app_code ?: items.sub_payment_code
                             // code?.let { items.logo_url = downloadAndSaveLogo(items.logo_url, it) }
                             
                             // Add null check for items.items
                             if (items.items is List<*>) {
                                 for (item in items.items) {
                                     if (item is LinkedTreeMap<*, *>) {
-                                        val logoUrl = item["logo_url"]?.toString() ?: ""
-                                        val filename = item["sub_payment_code"]?.toString() ?: ""
+                                        // Temporarily comment out logo downloads to fix compilation
+                                        // val logoUrl = item["logo_url"]?.toString() ?: ""
+                                        // val filename = item["sub_payment_code"]?.toString() ?: ""
                                         // downloadAndSaveLogo(logoUrl, filename)
                                     }
                                 }
@@ -109,8 +110,9 @@ class NimbblRepositoryImpl(
                                 if (schemes is ArrayList<*>) {
                                     for (obj in schemes) {
                                         if (obj is LinkedTreeMap<*, *>) {
-                                            val logoUrl = obj["logo_url"]?.toString() ?: ""
-                                            val fileName = obj["scheme_code"]?.toString() ?: ""
+                                            // Temporarily comment out logo downloads to fix compilation
+                                            // val logoUrl = obj["logo_url"]?.toString() ?: ""
+                                            // val fileName = obj["scheme_code"]?.toString() ?: ""
                                             // downloadAndSaveLogo(logoUrl, fileName)
                                         }
                                     }
@@ -178,7 +180,7 @@ class NimbblRepositoryImpl(
 
     override suspend fun updateOrderDetails(
         token: String,
-        orderId: String,
+        orderID: String,
         callback_mode: String,
         referrer_platform: String,
         referrer_platform_version: String
@@ -188,7 +190,7 @@ class NimbblRepositoryImpl(
             jsonObject.put(key_callback_mode, callback_mode)
         }
         jsonObject.put(key_referrer_platform, referrer_platform)
-        jsonObject.put(key_OrderID, orderId)
+        jsonObject.put(key_OrderID, orderID)
         jsonObject.put(key_referrer_platform_version, referrer_platform_version)
         val body: RequestBody = getAPIRequestBody(jsonObject)
         return apiService.updateOrder(BASE_URL + UPDATE_ORDER, "Bearer $token", body)

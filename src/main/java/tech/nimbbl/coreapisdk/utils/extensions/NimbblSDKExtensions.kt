@@ -109,7 +109,7 @@ fun isNetConnected(context: Context): Boolean {
         // Use legacy API for Android 5.0-5.1 (API 21-22)
         @Suppress("DEPRECATION")
         val activeNetworkInfo = connectivityManager.activeNetworkInfo
-        activeNetworkInfo?.isConnected == true
+        activeNetworkInfo?.isConnectedOrConnecting == true
     }
 }
 
