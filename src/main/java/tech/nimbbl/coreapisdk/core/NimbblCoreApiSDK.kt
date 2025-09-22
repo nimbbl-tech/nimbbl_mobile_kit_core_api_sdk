@@ -6,7 +6,6 @@ Copyright (c) 2022 Bigital Technologies Pvt. Ltd. All rights reserved.
 */
 
 import android.content.Context
-import com.google.gson.Gson
 import okhttp3.OkHttpClient
 import retrofit2.Response
 import retrofit2.Retrofit
@@ -27,7 +26,6 @@ import tech.nimbbl.coreapisdk.utils.extensions.getIPAddress
 import tech.nimbbl.coreapisdk.utils.logging.EventLoggingService
 import tech.nimbbl.coreapisdk.utils.payloads.OrderCreationPayload
 import android.util.Log
-import tech.nimbbl.coreapisdk.core.constants.Constants.SDK_VERSION_CENTRAL
 import tech.nimbbl.coreapisdk.core.constants.Constants.sdk_version
 import java.io.IOException
 
@@ -39,16 +37,16 @@ class NimbblCoreApiSDK private constructor() {
         BASE_URL = url
         FINGERPRINT = fingerPrint
         DEVICE_FINGERPRINT = deviceFingerPrint
-        
+
         // Initialize repository after setting up the configuration
         try {
             val webService = CoreAppWebService(
-                BASE_URL, 
-                DEVICE_FINGERPRINT, 
-                FINGERPRINT, 
+                BASE_URL,
+                DEVICE_FINGERPRINT,
+                FINGERPRINT,
                 getIPAddress(true)
             )
-            
+
             if (webService != null) {
                 nimbblApiRepository = NimbblRepositoryImpl(webService)
                 if (is_debug_enabled) {
@@ -63,22 +61,38 @@ class NimbblCoreApiSDK private constructor() {
     }
 
     suspend fun updateCheckOutCancelReason(token: String, orderId: String, cancelReason: String) {
-        getAPIRepositoryInstance()?.updateCheckOutCancelReason(token,orderId,cancelReason)
+        getAPIRepositoryInstance()?.updateCheckOutCancelReason(token, orderId, cancelReason)
     }
 
-    suspend fun getTransactionEnquiry(token: String, orderId: String, invoiceId: String,transactionId: String) : Response<TransactionEnquiryResponseVo>? {
-        return getAPIRepositoryInstance()?.getTransactionEnquiry(token,orderId,invoiceId,transactionId)
+    suspend fun getTransactionEnquiry(
+        token: String,
+        orderId: String,
+        invoiceId: String,
+        transactionId: String
+    ): Response<TransactionEnquiryResponseVo>? {
+        return getAPIRepositoryInstance()?.getTransactionEnquiry(
+            token,
+            orderId,
+            invoiceId,
+            transactionId
+        )
     }
 
-    suspend fun updateOrder(token: String, orderId: String, callbackMode: String,platformType: String) : Response<OrderResponse>? {
-        return getAPIRepositoryInstance()?.updateOrderDetails(token,orderId,callbackMode,platformType,
-            sdk_version)
+    suspend fun updateOrder(
+        token: String,
+        orderId: String,
+        callbackMode: String,
+        platformType: String
+    ): Response<OrderResponse>? {
+        return getAPIRepositoryInstance()?.updateOrderDetails(
+            token, orderId, callbackMode, platformType,
+            sdk_version
+        )
     }
-
 
 
     // Order Creation Methods
-    
+
     /**
      * Create a new order (iOS-compatible implementation)
      * @param shopBaseUrl The shop base URL for order creation
@@ -107,18 +121,18 @@ class NimbblCoreApiSDK private constructor() {
                 Log.e("NimbblCoreApiSDK", "createOrder: shopBaseUrl is null or empty")
                 return null
             }
-            
+
             if (totalAmount <= 0) {
                 Log.e("NimbblCoreApiSDK", "createOrder: totalAmount must be greater than 0")
                 return null
             }
-            
+
             // Use shop order creation URL (matching iOS implementation)
             val orderCreationUrl = getShopOrderUrl(shopBaseUrl)
-            
+
             // Handle empty payment mode by defaulting to "All"
             val finalPaymentMode = if (paymentMode.isNullOrEmpty()) "All" else paymentMode
-            
+
             val request = OrderCreationPayload.createShopOrderRequest(
                 currency = "INR",
                 amount = totalAmount.toString(),
@@ -131,52 +145,69 @@ class NimbblCoreApiSDK private constructor() {
                 userName = firstName,
                 userMobileNumber = mobileNumber
             )
-            
+
             if (is_debug_enabled) {
-                android.util.Log.d("NimbblCoreApiSDK", "Creating shop order with URL: $orderCreationUrl")
+                android.util.Log.d(
+                    "NimbblCoreApiSDK",
+                    "Creating shop order with URL: $orderCreationUrl"
+                )
                 android.util.Log.d("NimbblCoreApiSDK", "Shop order request: $request")
             }
-            
+
             // Create a dynamic Retrofit instance for this specific call
             val client = OkHttpClient.Builder()
                 .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
                 .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
                 .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
                 .build()
-            
+
             val retrofit = Retrofit.Builder()
                 .baseUrl(shopBaseUrl)
                 .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
-            
+
             val orderService = retrofit.create(OrderCreationService::class.java)
             val response = orderService.createOrder(orderCreationUrl, request)
-            
+
             if (response.isSuccessful) {
                 if (is_debug_enabled) {
-                    android.util.Log.d("NimbblCoreApiSDK", "Shop order created successfully: ${response.body()}")
+                    android.util.Log.d(
+                        "NimbblCoreApiSDK",
+                        "Shop order created successfully: ${response.body()}"
+                    )
                 }
             } else {
                 val errorBody = response.errorBody()?.string()
                 if (is_debug_enabled) {
-                    android.util.Log.e("NimbblCoreApiSDK", "Shop order creation failed. Status: ${response.code()}, Error: $errorBody")
+                    android.util.Log.e(
+                        "NimbblCoreApiSDK",
+                        "Shop order creation failed. Status: ${response.code()}, Error: $errorBody"
+                    )
                 }
             }
-            
+
             return response
         } catch (e: IOException) {
             Log.e("NimbblCoreApiSDK", "Network error during shop order creation: ${e.message}", e)
             return null
         } catch (e: IllegalArgumentException) {
-            Log.e("NimbblCoreApiSDK", "Invalid argument during shop order creation: ${e.message}", e)
+            Log.e(
+                "NimbblCoreApiSDK",
+                "Invalid argument during shop order creation: ${e.message}",
+                e
+            )
             return null
         } catch (e: Exception) {
-            Log.e("NimbblCoreApiSDK", "Unexpected error during shop order creation: ${e.message}", e)
+            Log.e(
+                "NimbblCoreApiSDK",
+                "Unexpected error during shop order creation: ${e.message}",
+                e
+            )
             return null
         }
     }
-    
+
     /**
      * Get shop order URL based on environment (matching iOS implementation)
      * @param baseUrl The base URL
@@ -194,14 +225,17 @@ class NimbblCoreApiSDK private constructor() {
                     "$shopHost/create-shop"
                 }
             }
+
             baseUrl.contains("pp") -> {
                 // For pre-production
                 "https://sonicshopapipp.nimbbl.tech/create-shop"
             }
+
             baseUrl.contains("api.nimbbl.tech") && !baseUrl.contains("qa") && !baseUrl.contains("pp") -> {
                 // For production
                 "https://sonicshopapi.nimbbl.tech/create-shop"
             }
+
             else -> {
                 // Fallback to production
                 "https://sonicshopapi.nimbbl.tech/create-shop"
@@ -210,7 +244,7 @@ class NimbblCoreApiSDK private constructor() {
     }
 
     // Event Logging Methods
-    
+
     /**
      * Log an event using the core API SDK event logging service
      */
@@ -237,7 +271,7 @@ class NimbblCoreApiSDK private constructor() {
             customAppInfo
         )
     }
-    
+
     /**
      * Log a checkout event
      */
@@ -249,9 +283,9 @@ class NimbblCoreApiSDK private constructor() {
         subMerchantId: String? = null,
         additionalData: Map<String, Any>? = null
     ) {
-        logEvent(context, eventName, orderId, token,subMerchantId, additionalData)
+        logEvent(context, eventName, orderId, token, subMerchantId, additionalData)
     }
-    
+
     /**
      * Log a payment event
      */
@@ -263,9 +297,9 @@ class NimbblCoreApiSDK private constructor() {
         subMerchantId: String?,
         additionalData: Map<String, Any>? = null
     ) {
-        logEvent(context, eventName, orderId, token,subMerchantId, additionalData)
+        logEvent(context, eventName, orderId, token, subMerchantId, additionalData)
     }
-    
+
     /**
      * Log an API call event
      */
@@ -277,9 +311,9 @@ class NimbblCoreApiSDK private constructor() {
         subMerchantId: String? = null,
         additionalData: Map<String, Any>? = null
     ) {
-        logEvent(context, eventName, orderId, token,subMerchantId, additionalData)
+        logEvent(context, eventName, orderId, token, subMerchantId, additionalData)
     }
-    
+
     /**
      * Log a transaction event
      */
@@ -291,9 +325,9 @@ class NimbblCoreApiSDK private constructor() {
         subMerchantId: String? = null,
         additionalData: Map<String, Any>? = null
     ) {
-        logEvent(context, eventName, orderId, token,subMerchantId, additionalData)
+        logEvent(context, eventName, orderId, token, subMerchantId, additionalData)
     }
-    
+
     /**
      * Log a user event
      */
@@ -305,7 +339,7 @@ class NimbblCoreApiSDK private constructor() {
         subMerchantId: String? = null,
         additionalData: Map<String, Any>? = null
     ) {
-        logEvent(context, eventName, orderId, token,subMerchantId, additionalData)
+        logEvent(context, eventName, orderId, token, subMerchantId, additionalData)
     }
 
 
@@ -363,7 +397,7 @@ class NimbblCoreApiSDK private constructor() {
         fun isInitialized(): Boolean {
             return nimbblApiRepository != null && BASE_URL.isNotEmpty() && FINGERPRINT.isNotEmpty() && DEVICE_FINGERPRINT.isNotEmpty()
         }
-        
+
         /**
          * Reset the repository instance (useful for testing or re-initialization)
          */
@@ -373,7 +407,7 @@ class NimbblCoreApiSDK private constructor() {
                 Log.d("NimbblCoreApiSDK", "Repository reset")
             }
         }
-        
+
         /**
          * Get API repository instance with null safety
          */
@@ -382,12 +416,12 @@ class NimbblCoreApiSDK private constructor() {
                 try {
                     // Initialize the repository with proper web service
                     val webService = CoreAppWebService(
-                        BASE_URL, 
-                        DEVICE_FINGERPRINT, 
-                        FINGERPRINT, 
+                        BASE_URL,
+                        DEVICE_FINGERPRINT,
+                        FINGERPRINT,
                         getIPAddress(true)
                     )
-                    
+
                     if (webService != null) {
                         nimbblApiRepository = NimbblRepositoryImpl(webService)
                         if (is_debug_enabled) {
@@ -400,7 +434,7 @@ class NimbblCoreApiSDK private constructor() {
                     Log.e("NimbblCoreApiSDK", "Error initializing repository: ${e.message}", e)
                 }
             }
-            
+
             return nimbblApiRepository?.also {
                 // Repository instance is available, log success if debug is enabled
                 if (is_debug_enabled) {
@@ -411,7 +445,7 @@ class NimbblCoreApiSDK private constructor() {
                 null
             }
         }
-        
+
         fun getOrderCreationServiceInstance(): OrderCreationService? {
             if (orderCreationService == null) {
                 val client = OkHttpClient.Builder()
@@ -419,13 +453,13 @@ class NimbblCoreApiSDK private constructor() {
                     .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
                     .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
                     .build()
-                
+
                 val retrofit = Retrofit.Builder()
                     .baseUrl("https://api.nimbbl.tech/") // Use a real base URL that will be overridden
                     .client(client)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build()
-                
+
                 orderCreationService = retrofit.create(OrderCreationService::class.java)
             }
             return orderCreationService
