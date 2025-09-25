@@ -23,6 +23,7 @@ import tech.nimbbl.coreapisdk.core.constants.Constants
 import tech.nimbbl.coreapisdk.core.constants.Constants.is_debug_enabled
 import tech.nimbbl.coreapisdk.utils.extensions.getDeviceInfo
 import tech.nimbbl.coreapisdk.utils.extensions.md5
+import tech.nimbbl.coreapisdk.utils.DataMasker
 import java.net.NetworkInterface
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -83,7 +84,7 @@ class EventLoggingService private constructor() {
             Log.d(TAG, "Event Name: $eventName")
             Log.d(TAG, "Order ID: $orderId")
             Log.d(TAG, "Sub Merchant ID: $subMerchantId")
-            Log.d(TAG, "Token: ${token?.take(20)}...") // Show first 20 chars for security
+            Log.d(TAG, "Token: ${DataMasker.maskToken(token)}")
             Log.d(TAG, "Additional Data: $additionalData")
             Log.d(TAG, "Custom User Agent: $customUserAgent")
             Log.d(TAG, "Custom Device Info: $customDeviceInfo")
@@ -188,7 +189,7 @@ class EventLoggingService private constructor() {
         
         // Order and token information
         orderId?.let { data.addProperty("order_id", it) }
-        token?.let { data.addProperty("token", it) }
+        token?.let { data.addProperty("token", DataMasker.maskToken(it)) }
 
         // Device information
         data.addProperty("device_id", customDeviceInfo?.get("device_id") ?: getDeviceId(context))
@@ -240,10 +241,17 @@ class EventLoggingService private constructor() {
             }
         }
         
-        // Add any additional data
+        // Add any additional data (with token masking)
         additionalData?.forEach { (key, value) ->
             when (value) {
-                is String -> data.addProperty(key, value)
+                is String -> {
+                    // Mask tokens in additional data
+                    if (key.lowercase().contains("token")) {
+                        data.addProperty(key, DataMasker.maskToken(value))
+                    } else {
+                        data.addProperty(key, value)
+                    }
+                }
                 is Int -> data.addProperty(key, value)
                 is Long -> data.addProperty(key, value)
                 is Double -> data.addProperty(key, value)
@@ -300,7 +308,7 @@ class EventLoggingService private constructor() {
         
         // Order and token information
         orderId?.let { data.addProperty("order_id", it) }
-        token?.let { data.addProperty("token", it) }
+        token?.let { data.addProperty("token", DataMasker.maskToken(it)) }
 
         eventData.add("data", data)
         return eventData
