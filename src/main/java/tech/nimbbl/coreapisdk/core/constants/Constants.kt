@@ -5,8 +5,8 @@ Created by Sandeep Yadav on 23/02/22.
 Copyright (c) 2022 Bigital Technologies Pvt. Ltd. All rights reserved.
 */
 
-import tech.nimbbl.coreapisdk.BuildConfig
 import android.util.Log
+import tech.nimbbl.coreapisdk.BuildConfig
 
 object Constants {
     // Debug flag - automatically false in release builds

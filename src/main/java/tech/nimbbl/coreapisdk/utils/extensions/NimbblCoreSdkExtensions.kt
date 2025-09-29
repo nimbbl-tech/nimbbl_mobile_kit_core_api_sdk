@@ -1,7 +1,6 @@
 package tech.nimbbl.coreapisdk.utils.extensions
 
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
 import org.json.JSONArray

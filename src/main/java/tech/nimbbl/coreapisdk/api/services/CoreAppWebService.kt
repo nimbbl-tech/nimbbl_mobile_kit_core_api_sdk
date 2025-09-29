@@ -1,5 +1,6 @@
 package tech.nimbbl.coreapisdk.api.services
 
+import android.util.Log
 import com.google.gson.GsonBuilder
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -35,7 +36,6 @@ import tech.nimbbl.coreapisdk.data.models.payment.ListOfWalletResponse
 import tech.nimbbl.coreapisdk.data.models.payment.PaymentModesResponse
 import tech.nimbbl.coreapisdk.utils.extensions.printLog
 import java.util.concurrent.TimeUnit
-import android.util.Log
 
 
 interface CoreAppWebService {

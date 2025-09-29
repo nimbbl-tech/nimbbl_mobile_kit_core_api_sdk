@@ -6,6 +6,7 @@ Copyright (c) 2022 Bigital Technologies Pvt. Ltd. All rights reserved.
 */
 
 import android.content.Context
+import android.util.Log
 import okhttp3.OkHttpClient
 import retrofit2.Response
 import retrofit2.Retrofit
@@ -15,18 +16,17 @@ import tech.nimbbl.coreapisdk.api.models.responses.OrderResponse
 import tech.nimbbl.coreapisdk.api.models.responses.transaction_enquiry.TransactionEnquiryResponseVo
 import tech.nimbbl.coreapisdk.api.services.CoreAppWebService
 import tech.nimbbl.coreapisdk.api.services.OrderCreationService
+import tech.nimbbl.coreapisdk.core.constants.Constants.is_debug_enabled
+import tech.nimbbl.coreapisdk.core.constants.Constants.sdk_version
 import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.BASE_URL
 import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.DEVICE_FINGERPRINT
 import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.FINGERPRINT
-import tech.nimbbl.coreapisdk.core.constants.Constants.is_debug_enabled
 import tech.nimbbl.coreapisdk.data.repository.NimbblRepository
 import tech.nimbbl.coreapisdk.data.repository.NimbblRepositoryImpl
 import tech.nimbbl.coreapisdk.interfaces.checkout.NimbblPayNativeCheckoutPaymentListener
 import tech.nimbbl.coreapisdk.utils.extensions.getIPAddress
 import tech.nimbbl.coreapisdk.utils.logging.EventLoggingService
 import tech.nimbbl.coreapisdk.utils.payloads.OrderCreationPayload
-import android.util.Log
-import tech.nimbbl.coreapisdk.core.constants.Constants.sdk_version
 import java.io.IOException
 
 
