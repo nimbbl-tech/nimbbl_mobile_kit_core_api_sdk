@@ -103,7 +103,7 @@ afterEvaluate {
                 pom {
                     name.set("Nimbbl Checkout Core SDK")
                     description.set("Nimbbl Checkout Core SDK for Android - Semantic Version ${versionProperties.getProperty("SDK_VERSION", "1.0.0")}")
-                    url.set("https://bitbucket.org/nimbbl-tech/nimbbl_mobile_kit_core_api_sdk")
+                    url.set("https://github.com/nimbbl-tech/nimbbl_mobile_kit_core_api_sdk")
                     
                     licenses {
                         license {
@@ -115,15 +115,15 @@ afterEvaluate {
                     developers {
                         developer {
                             id.set("nimbbl-tech")
-                            name.set("Nimbbl Technologies")
-                            email.set("tech@nimbbl.tech")
+                            name.set("Bigital Technologies Pvt. Ltd")
+                            email.set("tech@nimbbl.biz")
                         }
                     }
                     
                     scm {
-                        connection.set("scm:git:git://bitbucket.org/nimbbl-tech/nimbbl_mobile_kit_core_api_sdk.git")
-                        developerConnection.set("scm:git:ssh://bitbucket.org/nimbbl-tech/nimbbl_mobile_kit_core_api_sdk.git")
-                        url.set("https://bitbucket.org/nimbbl-tech/nimbbl_mobile_kit_core_api_sdk")
+                        connection.set("scm:git:git://github.com/nimbbl-tech/nimbbl_mobile_kit_core_api_sdk.git")
+                        developerConnection.set("scm:git:ssh://github.com/nimbbl-tech/nimbbl_mobile_kit_core_api_sdk.git")
+                        url.set("https://github.com/nimbbl-tech/nimbbl_mobile_kit_core_api_sdk")
                     }
                 }
             }
