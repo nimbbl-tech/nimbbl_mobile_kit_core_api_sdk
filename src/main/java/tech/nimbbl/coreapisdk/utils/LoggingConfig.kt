@@ -32,7 +32,9 @@ object LoggingConfig {
         if (!is_debug_enabled) {
             currentLogLevel = LogLevel.ERROR
             isLoggingEnabled = true
-            Log.i(TAG, "Logging configured for production - ERROR level only")
+            if (is_debug_enabled) {
+                Log.i(TAG, "Logging configured for production - ERROR level only")
+            }
         }
     }
     
@@ -53,7 +55,9 @@ object LoggingConfig {
      */
     fun setLogLevel(level: LogLevel) {
         currentLogLevel = level
-        Log.i(TAG, "Log level set to: $level")
+        if (is_debug_enabled) {
+            Log.i(TAG, "Log level set to: $level")
+        }
     }
     
     /**
@@ -61,7 +65,9 @@ object LoggingConfig {
      */
     fun setLoggingEnabled(enabled: Boolean) {
         isLoggingEnabled = enabled
-        Log.i(TAG, "Logging ${if (enabled) "enabled" else "disabled"}")
+        if (is_debug_enabled) {
+            Log.i(TAG, "Logging ${if (enabled) "enabled" else "disabled"}")
+        }
     }
     
     /**

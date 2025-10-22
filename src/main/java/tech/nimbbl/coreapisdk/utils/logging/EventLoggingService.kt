@@ -42,10 +42,22 @@ class EventLoggingService private constructor() {
         @Volatile
         private var INSTANCE: EventLoggingService? = null
         
+        // Store app code set by WebView SDK
+        @Volatile
+        private var appCode: String? = null
+        
         fun getInstance(): EventLoggingService {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: EventLoggingService().also { INSTANCE = it }
             }
+        }
+        
+        /**
+         * Set the app code for logging events
+         * This method is called by the WebView SDK when initializing the Core API SDK
+         */
+        fun setAppCode(code: String?) {
+            appCode = code
         }
     }
     
@@ -164,7 +176,7 @@ class EventLoggingService private constructor() {
         eventData.addProperty("submerchantId", subMerchantId ?: "")
         eventData.addProperty("clientIP", customDeviceInfo?.get("ip_address") ?: getIPAddress())
         eventData.addProperty("productCode", customAppInfo?.get("product_name") ?: "Payments")
-        eventData.addProperty("appCode", customAppInfo?.get("application_name") ?: "android_webview_sdk")
+        eventData.addProperty("application_name", getAppCode(customAppInfo))
 
         // Timestamp information
         val now = Date()
@@ -183,7 +195,7 @@ class EventLoggingService private constructor() {
         
         // Application information
         data.addProperty("productCode", customAppInfo?.get("product_name") ?: "Payments")
-        data.addProperty("appCode", customAppInfo?.get("application_name") ?: "android_webview_sdk")
+        data.addProperty("application_name", getAppCode(customAppInfo))
         data.addProperty("environment", customAppInfo?.get("environment") ?: "")
                     data.addProperty("appVersion", customAppInfo?.get("appVersion") ?: Constants.sdk_version)
         
@@ -287,7 +299,7 @@ class EventLoggingService private constructor() {
         eventData.addProperty("submerchantId", subMerchantId ?: "")
         eventData.addProperty("clientIP", getIPAddress())
         eventData.addProperty("productCode", "Payments")
-        eventData.addProperty("appCode",  "android_webview_sdk")
+        eventData.addProperty("application_name", getAppCode(null))
 
         // Timestamp information
         val now = Date()
@@ -300,7 +312,7 @@ class EventLoggingService private constructor() {
         data.addProperty("ua_device", Build.MANUFACTURER + " " + Build.MODEL)
         data.addProperty("ua_os", Build.VERSION.RELEASE)
         data.addProperty("productCode", "Payments")
-        data.addProperty("appCode", "android_webview_sdk")
+        data.addProperty("application_name", getAppCode(null))
         data.addProperty("appVersion", Constants.sdk_version)
         data.addProperty("device_id", getDeviceId(context))
         data.addProperty("ip_address", getIPAddress())
@@ -432,6 +444,24 @@ class EventLoggingService private constructor() {
             "unknown"
         } catch (e: Exception) {
             "unknown"
+        }
+    }
+    
+    /**
+     * Get the app code from WebView SDK if available, otherwise use default or custom app info
+     */
+    private fun getAppCode(customAppInfo: Map<String, String>?): String {
+        return try {
+            // Try to get app code set by WebView SDK first
+            if (!appCode.isNullOrEmpty()) {
+                return appCode!!
+            }
+            
+            // Fallback to custom app info
+            customAppInfo?.get("application_name") ?: "android_webview_sdk"
+        } catch (e: Exception) {
+            // Fallback to default if any error occurs
+            customAppInfo?.get("application_name") ?: "android_webview_sdk"
         }
     }
 } 

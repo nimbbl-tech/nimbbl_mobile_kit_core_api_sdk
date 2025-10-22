@@ -23,7 +23,6 @@ import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.DEVICE_F
 import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.FINGERPRINT
 import tech.nimbbl.coreapisdk.data.repository.NimbblRepository
 import tech.nimbbl.coreapisdk.data.repository.NimbblRepositoryImpl
-import tech.nimbbl.coreapisdk.interfaces.checkout.NimbblPayNativeCheckoutPaymentListener
 import tech.nimbbl.coreapisdk.utils.extensions.getIPAddress
 import tech.nimbbl.coreapisdk.utils.logging.EventLoggingService
 import tech.nimbbl.coreapisdk.utils.payloads.OrderCreationPayload
@@ -31,12 +30,16 @@ import java.io.IOException
 
 
 class NimbblCoreApiSDK private constructor() {
-    private var nimbblPayListener: NimbblPayNativeCheckoutPaymentListener? = null
 
-    fun initialiseAPISDK(url: String, fingerPrint: String, deviceFingerPrint: String) {
+    fun initialiseAPISDK(url: String, fingerPrint: String, deviceFingerPrint: String, appCode: String? = null) {
         BASE_URL = url
         FINGERPRINT = fingerPrint
         DEVICE_FINGERPRINT = deviceFingerPrint
+        
+        // Store the app code for logging
+        if (!appCode.isNullOrEmpty()) {
+            EventLoggingService.setAppCode(appCode)
+        }
 
         // Initialize repository after setting up the configuration
         try {
