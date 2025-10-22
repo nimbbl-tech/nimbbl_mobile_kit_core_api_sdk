@@ -1,5 +1,6 @@
 package tech.nimbbl.coreapisdk.utils.payloads
 
+import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 import tech.nimbbl.coreapisdk.core.constants.PayloadKeys.Companion.action_completePayment
@@ -49,7 +50,6 @@ import tech.nimbbl.coreapisdk.core.constants.PayloadKeys.Companion.value_sub_pay
 import tech.nimbbl.coreapisdk.core.constants.PayloadKeys.Companion.value_sub_payment_code_prepaid
 import tech.nimbbl.coreapisdk.data.models.common.ResolveUserResponse
 import tech.nimbbl.coreapisdk.data.models.payment.BinData
-import android.util.Log
 
 
 /*

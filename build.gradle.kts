@@ -1,4 +1,12 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.Properties
+
+// Load version properties
+val versionProperties = Properties()
+val versionPropertiesFile = rootProject.file("version.properties")
+if (versionPropertiesFile.exists()) {
+    versionProperties.load(versionPropertiesFile.inputStream())
+}
 
 plugins {
     id("com.android.library")
@@ -8,15 +16,17 @@ plugins {
 
 android {
     namespace = "tech.nimbbl.coreapisdk"
-    compileSdk = 34
+    compileSdk = versionProperties.getProperty("COMPILE_ANDROID_SDK", "34").toInt()
 
     defaultConfig {
-        minSdk = 21
+        minSdk = versionProperties.getProperty("MIN_ANDROID_SDK", "21").toInt()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
         
-        // Event Logging Configuration - Now dynamically determined based on BASE_URL
-        // Removed BuildConfig fields as they are now computed at runtime
+        // Build config fields for version information
+        buildConfigField("String", "SDK_VERSION", "\"${versionProperties.getProperty("SDK_VERSION", "1.0.0")}\"")
+        buildConfigField("String", "BUILD_DATE", "\"${versionProperties.getProperty("BUILD_DATE", "unknown")}\"")
+        buildConfigField("String", "BUILD_TYPE", "\"${versionProperties.getProperty("BUILD_TYPE", "debug")}\"")
     }
 
     buildFeatures {
@@ -85,18 +95,16 @@ afterEvaluate {
             create<MavenPublication>("release") {
                 from(components["release"])
                 
-                // The sources jar is automatically included by the Android library component
-                // No need to manually add it to avoid duplicates
-
+                // JitPack coordinates (for backward compatibility)
                 groupId = "com.github.nimbbl-tech"
                 artifactId = "nimbbl-checkout-core-sdk"
-                version = "3.0.15"
+                version = versionProperties.getProperty("SDK_VERSION", "1.0.0")
 
                 pom {
-                    name.set("nimbbl-checkout-core-sdk")
-                    description.set("Nimbbl Checkout Core SDK for Android")
+                    name.set("Nimbbl Checkout Core SDK")
+                    description.set("Nimbbl Checkout Core SDK for Android - Semantic Version ${versionProperties.getProperty("SDK_VERSION", "1.0.0")}")
                     url.set("https://github.com/nimbbl-tech/nimbbl_mobile_kit_core_api_sdk")
-
+                    
                     licenses {
                         license {
                             name.set("MIT License")
@@ -107,15 +115,15 @@ afterEvaluate {
                     developers {
                         developer {
                             id.set("nimbbl-tech")
-                            name.set("Nimbbl Team")
-                            email.set("team@nimbbl.tech")
+                            name.set("Bigital Technologies Pvt. Ltd")
+                            email.set("tech@nimbbl.biz")
                         }
                     }
                     
                     scm {
-                        connection.set("scm:git:git://github.com/nimbbl-tech/nimbbl-mobile-kit-core-api-sdk.git")
-                        developerConnection.set("scm:git:ssh://github.com/nimbbl-tech/nimbbl-mobile-kit-core-api-sdk.git")
-                        url.set("https://github.com/nimbbl-tech/nimbbl-mobile-kit-core-api-sdk")
+                        connection.set("scm:git:git://github.com/nimbbl-tech/nimbbl_mobile_kit_core_api_sdk.git")
+                        developerConnection.set("scm:git:ssh://github.com/nimbbl-tech/nimbbl_mobile_kit_core_api_sdk.git")
+                        url.set("https://github.com/nimbbl-tech/nimbbl_mobile_kit_core_api_sdk")
                     }
                 }
             }

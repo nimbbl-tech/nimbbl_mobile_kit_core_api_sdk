@@ -9,6 +9,7 @@ import android.content.Context
 import android.util.Log
 import tech.nimbbl.coreapisdk.core.NimbblCoreApiSDK
 import tech.nimbbl.coreapisdk.core.constants.Constants.is_debug_enabled
+import tech.nimbbl.coreapisdk.utils.DataMasker
 
 /**
  * Utility class for safe event logging across the Nimbbl SDK
@@ -17,6 +18,32 @@ import tech.nimbbl.coreapisdk.core.constants.Constants.is_debug_enabled
 object EventLoggingUtils {
     
     private const val TAG = "EventLoggingUtils"
+    
+    /**
+     * Masks tokens in additional data, specifically in URL fields
+     * @param additionalData The additional data map that may contain URLs with tokens
+     * @return A new map with masked tokens in URL fields
+     */
+    private fun maskTokensInAdditionalData(additionalData: Map<String, Any>?): Map<String, Any>? {
+        if (additionalData == null) return null
+        
+        return additionalData.mapValues { (key, value) ->
+            when (value) {
+                is String -> {
+                    // Check if this looks like a URL field that might contain tokens
+                    if (key.contains("url", ignoreCase = true) || 
+                        key.contains("callback", ignoreCase = true) ||
+                        key.contains("redirect", ignoreCase = true) ||
+                        key.contains("intercepted", ignoreCase = true)) {
+                        DataMasker.maskTokensInUrl(value)
+                    } else {
+                        value
+                    }
+                }
+                else -> value
+            }
+        }
+    }
     
     /**
      * Safely log an event without impacting the main flow
@@ -37,14 +64,17 @@ object EventLoggingUtils {
         additionalData: Map<String, Any>? = null,
         sdkVersion: String? = null
     ) {
+        // Mask tokens in additional data URLs
+        val maskedAdditionalData = maskTokensInAdditionalData(additionalData)
+        
         // Debug logging for event parameters
         if (is_debug_enabled) {
             Log.d(TAG, "=== EVENT CALL DEBUG ===")
             Log.d(TAG, "Event: $eventName")
             Log.d(TAG, "Order ID: $orderId")
             Log.d(TAG, "Sub Merchant ID: $subMerchantId")
-            Log.d(TAG, "Token: ${token?.take(20)}...")
-            Log.d(TAG, "Additional Data: $additionalData")
+            Log.d(TAG, "Token: ${DataMasker.maskToken(token)}")
+            Log.d(TAG, "Additional Data: $maskedAdditionalData")
             Log.d(TAG, "SDK Version: $sdkVersion")
             Log.d(TAG, "Context: ${context.javaClass.simpleName}")
             Log.d(TAG, "=========================")
@@ -61,7 +91,7 @@ object EventLoggingUtils {
                 orderId,
                 token,
                 subMerchantId,
-                additionalData,
+                maskedAdditionalData,
                 null, // customUserAgent
                 null, // customDeviceInfo
                 customAppInfo
@@ -97,6 +127,9 @@ object EventLoggingUtils {
         sdkVersion: String? = null
     ) {
         try {
+            // Mask tokens in additional data URLs
+            val maskedAdditionalData = maskTokensInAdditionalData(additionalData)
+            
             val customAppInfo = if (sdkVersion != null) {
                 mapOf("appVersion" to sdkVersion)
             } else null
@@ -107,7 +140,7 @@ object EventLoggingUtils {
                 orderId,
                 token,
                 subMerchantId,
-                additionalData,
+                maskedAdditionalData,
                 null, // customUserAgent
                 null, // customDeviceInfo
                 customAppInfo
