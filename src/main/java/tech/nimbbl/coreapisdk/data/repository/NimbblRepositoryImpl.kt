@@ -32,6 +32,8 @@ import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.BASE_URL
 import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.CHECKOUT_CANCEL
 import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.TRANSACTION_ENQUIRY
 import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.UPDATE_ORDER
+import tech.nimbbl.coreapisdk.core.constants.Constants.is_debug_enabled
+import tech.nimbbl.coreapisdk.utils.logging.ApiLoggingUtils
 import tech.nimbbl.coreapisdk.data.models.common.CheckoutResourceVo
 import tech.nimbbl.coreapisdk.data.models.common.InitiatePaymentResponse
 import tech.nimbbl.coreapisdk.data.models.common.PublicKeyResponse
@@ -175,7 +177,24 @@ class NimbblRepositoryImpl(
         url: String,
         token: String
     ): Response<OrderResponse> {
-        return apiService.getOrderDetails(url, "Bearer $token")
+        // Centralized API logging for request
+        ApiLoggingUtils.logRequestDetails(
+            method = "GET",
+            url = url,
+            customTag = "NimbblRepositoryImpl"
+        )
+        
+        val response = apiService.getOrderDetails(url, "Bearer $token")
+        
+        // Centralized API logging for response
+        ApiLoggingUtils.logResponseDetails(
+            code = response.code(),
+            message = response.message(),
+            body = response.body()?.toString(),
+            customTag = "NimbblRepositoryImpl"
+        )
+        
+        return response
     }
 
     override suspend fun updateOrderDetails(
@@ -193,7 +212,26 @@ class NimbblRepositoryImpl(
         jsonObject.put(key_OrderID, orderID)
         jsonObject.put(key_referrer_platform_version, referrer_platform_version)
         val body: RequestBody = getAPIRequestBody(jsonObject)
-        return apiService.updateOrder(BASE_URL + UPDATE_ORDER, "Bearer $token", body)
+        
+        // Centralized API logging for request
+        ApiLoggingUtils.logRequestDetails(
+            method = "PATCH",
+            url = BASE_URL + UPDATE_ORDER,
+            body = jsonObject.toString(),
+            customTag = "NimbblRepositoryImpl"
+        )
+        
+        val response = apiService.updateOrder(BASE_URL + UPDATE_ORDER, "Bearer $token", body)
+        
+        // Centralized API logging for response
+        ApiLoggingUtils.logResponseDetails(
+            code = response.code(),
+            message = response.message(),
+            body = response.body()?.toString(),
+            customTag = "NimbblRepositoryImpl"
+        )
+        
+        return response
     }
 
     override suspend fun resolveUser(

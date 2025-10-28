@@ -25,6 +25,7 @@ import tech.nimbbl.coreapisdk.data.repository.NimbblRepository
 import tech.nimbbl.coreapisdk.data.repository.NimbblRepositoryImpl
 import tech.nimbbl.coreapisdk.utils.extensions.getIPAddress
 import tech.nimbbl.coreapisdk.utils.logging.EventLoggingService
+import tech.nimbbl.coreapisdk.utils.LoggingConfig
 import tech.nimbbl.coreapisdk.utils.payloads.OrderCreationPayload
 import java.io.IOException
 
@@ -35,6 +36,16 @@ class NimbblCoreApiSDK private constructor() {
         BASE_URL = url
         FINGERPRINT = fingerPrint
         DEVICE_FINGERPRINT = deviceFingerPrint
+        
+        // Configure logging based on build type
+        if (is_debug_enabled) {
+            LoggingConfig.configureForDevelopment()
+        } else {
+            LoggingConfig.configureForProduction()
+        }
+        
+        // Event logging is always enabled (events always sent to server)
+        EventLoggingService.setEventLoggingEnabled(true)
         
         // Store the app code for logging
         if (!appCode.isNullOrEmpty()) {
@@ -150,11 +161,11 @@ class NimbblCoreApiSDK private constructor() {
             )
 
             if (is_debug_enabled) {
-                android.util.Log.d(
+                Log.d(
                     "NimbblCoreApiSDK",
                     "Creating shop order with URL: $orderCreationUrl"
                 )
-                android.util.Log.d("NimbblCoreApiSDK", "Shop order request: $request")
+                Log.d("NimbblCoreApiSDK", "Shop order request: $request")
             }
 
             // Create a dynamic Retrofit instance for this specific call
@@ -175,7 +186,7 @@ class NimbblCoreApiSDK private constructor() {
 
             if (response.isSuccessful) {
                 if (is_debug_enabled) {
-                    android.util.Log.d(
+                    Log.d(
                         "NimbblCoreApiSDK",
                         "Shop order created successfully: ${response.body()}"
                     )
@@ -183,7 +194,7 @@ class NimbblCoreApiSDK private constructor() {
             } else {
                 val errorBody = response.errorBody()?.string()
                 if (is_debug_enabled) {
-                    android.util.Log.e(
+                    Log.e(
                         "NimbblCoreApiSDK",
                         "Shop order creation failed. Status: ${response.code()}, Error: $errorBody"
                     )
@@ -466,6 +477,23 @@ class NimbblCoreApiSDK private constructor() {
                 orderCreationService = retrofit.create(OrderCreationService::class.java)
             }
             return orderCreationService
+        }
+        
+        /**
+         * Enable or disable event logging to server
+         * Note: Event logging is enabled by default and should remain enabled
+         * Debug logging is automatically controlled by build type (debug builds show logs, production builds don't)
+         * @param enabled true to enable event logging, false to disable
+         */
+        fun setEventLoggingEnabled(enabled: Boolean) {
+            EventLoggingService.setEventLoggingEnabled(enabled)
+        }
+        
+        /**
+         * Check if event logging is enabled
+         */
+        fun isEventLoggingEnabled(): Boolean {
+            return EventLoggingService.isEventLoggingEnabled()
         }
     }
 }

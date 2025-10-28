@@ -8,6 +8,8 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
+import tech.nimbbl.coreapisdk.utils.logging.ApiLoggingUtils
+import tech.nimbbl.coreapisdk.core.constants.Constants.is_debug_enabled
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -180,9 +182,27 @@ interface CoreAppWebService {
             ipAddress: String
         ): CoreAppWebService? {
             val logging = HttpLoggingInterceptor()
-            logging.setLevel(HttpLoggingInterceptor.Level.BODY)
+            // Set logging level based on debug mode
+            if (is_debug_enabled) {
+                logging.setLevel(HttpLoggingInterceptor.Level.BODY)
+            } else {
+                logging.setLevel(HttpLoggingInterceptor.Level.NONE)
+            }
+            
+            // Centralized API logging interceptor
+            val apiLoggingInterceptor = Interceptor { chain ->
+                val request = chain.request()
+                ApiLoggingUtils.logRequest(request, "CoreAppWebService")
+                
+                val response = chain.proceed(request)
+                ApiLoggingUtils.logResponse(response, "CoreAppWebService")
+                
+                response
+            }
+            
             val okHttpClient = OkHttpClient.Builder()
                 .addInterceptor(logging)
+                .addInterceptor(apiLoggingInterceptor)
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(30, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS)

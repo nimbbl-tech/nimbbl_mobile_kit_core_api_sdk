@@ -3,7 +3,7 @@ import java.util.Properties
 
 // Load version properties
 val versionProperties = Properties()
-val versionPropertiesFile = rootProject.file("version.properties")
+val versionPropertiesFile = file("version.properties")
 if (versionPropertiesFile.exists()) {
     versionProperties.load(versionPropertiesFile.inputStream())
 }

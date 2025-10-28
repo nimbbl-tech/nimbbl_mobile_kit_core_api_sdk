@@ -50,7 +50,7 @@ class ConstantsTest {
     @Test
     fun testDefaultTenantIdForQA() {
         ServiceConstants.BASE_URL = "https://qaapi.nimbbl.tech/"
-        assertEquals("99df59c6-7553-49ab-b884-6a7a8dc3953b", Constants.DEFAULT_TENANT_ID)
+        assertEquals("5fd6a596-a39f-4cb2-9a4b-ed72713e537e", Constants.DEFAULT_TENANT_ID)
     }
     
     @Test

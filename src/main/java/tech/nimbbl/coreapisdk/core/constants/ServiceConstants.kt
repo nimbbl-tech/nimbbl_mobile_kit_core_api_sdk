@@ -22,7 +22,7 @@ class ServiceConstants {
         const val EVENT_LOG_URL_PROD = "https://eventlogpipe.nimbbl.tech/v1/log"
         
         // Tenant IDs
-        const val TENANT_ID_QA = "99df59c6-7553-49ab-b884-6a7a8dc3953b"
+        const val TENANT_ID_QA = "5fd6a596-a39f-4cb2-9a4b-ed72713e537e"
         const val TENANT_ID_PP = "5fd6a596-a39f-4cb2-9a4b-ed72713e537e"
         const val TENANT_ID_PROD = "6e7e900c-9ce6-4271-b1ec-08875a9129d1"
 
