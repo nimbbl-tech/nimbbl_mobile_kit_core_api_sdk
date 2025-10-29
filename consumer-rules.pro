@@ -32,6 +32,10 @@
 -keep public class tech.nimbbl.coreapisdk.api.models.requests.CreateOrderRequest { *; }
 -keep public class tech.nimbbl.coreapisdk.api.models.responses.CreateOrderResponse { *; }
 
+# Keep constants classes used by other SDKs
+-keep class tech.nimbbl.coreapisdk.core.constants.EventConstants { *; }
+-keep class tech.nimbbl.coreapisdk.core.constants.PayloadKeys { *; }
+
 # ===========================================
 # JSON Serialization (Essential)
 # ===========================================
