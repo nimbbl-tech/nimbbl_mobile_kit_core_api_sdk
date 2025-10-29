@@ -23,6 +23,7 @@ import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.DEVICE_F
 import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.FINGERPRINT
 import tech.nimbbl.coreapisdk.data.repository.NimbblRepository
 import tech.nimbbl.coreapisdk.data.repository.NimbblRepositoryImpl
+import tech.nimbbl.coreapisdk.utils.LoggingConfig
 import tech.nimbbl.coreapisdk.utils.extensions.getIPAddress
 import tech.nimbbl.coreapisdk.utils.logging.EventLoggingService
 import tech.nimbbl.coreapisdk.utils.payloads.OrderCreationPayload
@@ -35,6 +36,16 @@ class NimbblCoreApiSDK private constructor() {
         BASE_URL = url
         FINGERPRINT = fingerPrint
         DEVICE_FINGERPRINT = deviceFingerPrint
+        
+        // Configure logging based on build type
+        if (is_debug_enabled) {
+            LoggingConfig.configureForDevelopment()
+        } else {
+            LoggingConfig.configureForProduction()
+        }
+        
+        // Event logging is always enabled (events always sent to server)
+        EventLoggingService.setEventLoggingEnabled(true)
         
         // Store the app code for logging
         if (!appCode.isNullOrEmpty()) {
@@ -150,11 +161,11 @@ class NimbblCoreApiSDK private constructor() {
             )
 
             if (is_debug_enabled) {
-                android.util.Log.d(
+                Log.d(
                     "NimbblCoreApiSDK",
                     "Creating shop order with URL: $orderCreationUrl"
                 )
-                android.util.Log.d("NimbblCoreApiSDK", "Shop order request: $request")
+                Log.d("NimbblCoreApiSDK", "Shop order request: $request")
             }
 
             // Create a dynamic Retrofit instance for this specific call
@@ -175,7 +186,7 @@ class NimbblCoreApiSDK private constructor() {
 
             if (response.isSuccessful) {
                 if (is_debug_enabled) {
-                    android.util.Log.d(
+                    Log.d(
                         "NimbblCoreApiSDK",
                         "Shop order created successfully: ${response.body()}"
                     )
@@ -183,7 +194,7 @@ class NimbblCoreApiSDK private constructor() {
             } else {
                 val errorBody = response.errorBody()?.string()
                 if (is_debug_enabled) {
-                    android.util.Log.e(
+                    Log.e(
                         "NimbblCoreApiSDK",
                         "Shop order creation failed. Status: ${response.code()}, Error: $errorBody"
                     )
@@ -347,16 +358,19 @@ class NimbblCoreApiSDK private constructor() {
 
 
     companion object {
+        @Volatile
         private var instance: NimbblCoreApiSDK? = null
         private var nimbblApiRepository: NimbblRepository? = null
         private var orderCreationService: OrderCreationService? = null
 
+        /**
+         * Get singleton instance of NimbblCoreApiSDK
+         * Thread-safe implementation using double-checked locking
+         */
         fun getInstance(): NimbblCoreApiSDK? {
-            if (instance == null) {
-
-                instance = NimbblCoreApiSDK()
+            return instance ?: synchronized(this) {
+                instance ?: NimbblCoreApiSDK().also { instance = it }
             }
-            return instance
         }
 
         /**
@@ -413,10 +427,11 @@ class NimbblCoreApiSDK private constructor() {
 
         /**
          * Get API repository instance with null safety
+         * Thread-safe initialization
          */
         fun getAPIRepositoryInstance(): NimbblRepository? {
-            if (nimbblApiRepository == null) {
-                try {
+            return nimbblApiRepository ?: synchronized(this) {
+                nimbblApiRepository ?: try {
                     // Initialize the repository with proper web service
                     val webService = CoreAppWebService(
                         BASE_URL,
@@ -426,46 +441,65 @@ class NimbblCoreApiSDK private constructor() {
                     )
 
                     if (webService != null) {
-                        nimbblApiRepository = NimbblRepositoryImpl(webService)
-                        if (is_debug_enabled) {
-                            Log.d("NimbblCoreApiSDK", "Repository initialized successfully")
-                        }
+                        NimbblRepositoryImpl(webService).also { nimbblApiRepository = it }
+                            .also {
+                                if (is_debug_enabled) {
+                                    Log.d("NimbblCoreApiSDK", "Repository initialized successfully")
+                                }
+                            }
                     } else {
                         Log.e("NimbblCoreApiSDK", "Failed to create web service")
+                        null
                     }
                 } catch (e: Exception) {
                     Log.e("NimbblCoreApiSDK", "Error initializing repository: ${e.message}", e)
+                    null
                 }
-            }
-
-            return nimbblApiRepository?.also {
-                // Repository instance is available, log success if debug is enabled
-                if (is_debug_enabled) {
-                    Log.d("NimbblCoreApiSDK", "Repository instance is available")
-                }
-            } ?: run {
-                Log.e("NimbblCoreApiSDK", "Repository instance is null, cannot proceed")
-                null
             }
         }
 
+        /**
+         * Get OrderCreationService instance
+         * Thread-safe initialization
+         */
         fun getOrderCreationServiceInstance(): OrderCreationService? {
-            if (orderCreationService == null) {
-                val client = OkHttpClient.Builder()
-                    .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                    .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                    .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                    .build()
+            return orderCreationService ?: synchronized(this) {
+                orderCreationService ?: try {
+                    val client = OkHttpClient.Builder()
+                        .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                        .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                        .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                        .build()
 
-                val retrofit = Retrofit.Builder()
-                    .baseUrl("https://api.nimbbl.tech/") // Use a real base URL that will be overridden
-                    .client(client)
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build()
+                    val retrofit = Retrofit.Builder()
+                        .baseUrl("https://api.nimbbl.tech/") // Use a real base URL that will be overridden
+                        .client(client)
+                        .addConverterFactory(GsonConverterFactory.create())
+                        .build()
 
-                orderCreationService = retrofit.create(OrderCreationService::class.java)
+                    retrofit.create(OrderCreationService::class.java).also { orderCreationService = it }
+                } catch (e: Exception) {
+                    Log.e("NimbblCoreApiSDK", "Error creating OrderCreationService: ${e.message}", e)
+                    null
+                }
             }
-            return orderCreationService
+        }
+        
+        /**
+         * Enable or disable event logging to server
+         * Note: Event logging is enabled by default and should remain enabled
+         * Debug logging is automatically controlled by build type (debug builds show logs, production builds don't)
+         * @param enabled true to enable event logging, false to disable
+         */
+        fun setEventLoggingEnabled(enabled: Boolean) {
+            EventLoggingService.setEventLoggingEnabled(enabled)
+        }
+        
+        /**
+         * Check if event logging is enabled
+         */
+        fun isEventLoggingEnabled(): Boolean {
+            return EventLoggingService.isEventLoggingEnabled()
         }
     }
 }

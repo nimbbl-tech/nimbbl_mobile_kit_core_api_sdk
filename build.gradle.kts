@@ -3,7 +3,7 @@ import java.util.Properties
 
 // Load version properties
 val versionProperties = Properties()
-val versionPropertiesFile = rootProject.file("version.properties")
+val versionPropertiesFile = file("version.properties")
 if (versionPropertiesFile.exists()) {
     versionProperties.load(versionPropertiesFile.inputStream())
 }
@@ -39,7 +39,7 @@ android {
         }
         
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true  // Enable SDK obfuscation
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

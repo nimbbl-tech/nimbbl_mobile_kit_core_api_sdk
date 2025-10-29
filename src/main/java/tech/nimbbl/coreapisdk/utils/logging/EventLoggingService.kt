@@ -21,6 +21,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import tech.nimbbl.coreapisdk.core.constants.Constants
 import tech.nimbbl.coreapisdk.core.constants.Constants.is_debug_enabled
+import tech.nimbbl.coreapisdk.utils.logging.ApiLoggingUtils
 import tech.nimbbl.coreapisdk.utils.DataMasker
 import tech.nimbbl.coreapisdk.utils.extensions.getDeviceInfo
 import tech.nimbbl.coreapisdk.utils.extensions.md5
@@ -46,6 +47,10 @@ class EventLoggingService private constructor() {
         @Volatile
         private var appCode: String? = null
         
+        // Event logging control flags
+        @Volatile
+        private var isEventLoggingEnabled: Boolean = true  // Always enabled by default
+        
         fun getInstance(): EventLoggingService {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: EventLoggingService().also { INSTANCE = it }
@@ -59,6 +64,22 @@ class EventLoggingService private constructor() {
         fun setAppCode(code: String?) {
             appCode = code
         }
+        
+        /**
+         * Enable or disable event logging to server
+         * @param enabled true to enable event logging, false to disable
+         */
+        fun setEventLoggingEnabled(enabled: Boolean) {
+            isEventLoggingEnabled = enabled
+            if (is_debug_enabled) {
+                Log.d(TAG, "Event logging ${if (enabled) "enabled" else "disabled"}")
+            }
+        }
+        
+        /**
+         * Check if event logging is enabled
+         */
+        fun isEventLoggingEnabled(): Boolean = isEventLoggingEnabled
     }
     
     private val httpClient = OkHttpClient.Builder()
@@ -102,7 +123,17 @@ class EventLoggingService private constructor() {
             Log.d(TAG, "Custom Device Info: $customDeviceInfo")
             Log.d(TAG, "Custom App Info: $customAppInfo")
             Log.d(TAG, "Context: ${context.javaClass.simpleName}")
+            Log.d(TAG, "Event Logging Enabled: $isEventLoggingEnabled")
             Log.d(TAG, "================================")
+        }
+        
+        // Event logging is always enabled - events are always sent to server
+        // This check is kept for future flexibility but currently always passes
+        if (!isEventLoggingEnabled) {
+            if (is_debug_enabled) {
+                Log.d(TAG, "Event logging is disabled, skipping event: $eventName")
+            }
+            return
         }
         
         // Use a separate coroutine scope to ensure it doesn't interfere with main flow
@@ -328,16 +359,16 @@ class EventLoggingService private constructor() {
 
     private fun sendEventToServer(eventData: JsonObject) {
         try {
-            val requestBody = Gson().toJson(eventData)
-                .toRequestBody("application/json".toMediaTypeOrNull())
+            val requestBodyJson = Gson().toJson(eventData)
+            val requestBody = requestBodyJson.toRequestBody("application/json".toMediaTypeOrNull())
             
-            // Debug print server request details
-            if (is_debug_enabled) {
-                Log.d(TAG, "=== SERVER REQUEST DEBUG ===")
-                Log.d(TAG, "URL: ${Constants.EVENT_LOG_URL}?tenantId=${Constants.DEFAULT_TENANT_ID}")
-                Log.d(TAG, "Request Body: $requestBody")
-                Log.d(TAG, "=============================")
-            }
+            // Centralized API logging for event server request
+            ApiLoggingUtils.logRequestDetails(
+                method = "POST",
+                url = "${Constants.EVENT_LOG_URL}?tenantId=${Constants.DEFAULT_TENANT_ID}",
+                body = requestBodyJson,
+                customTag = TAG
+            )
             
             val request = Request.Builder()
                 .url("${Constants.EVENT_LOG_URL}?tenantId=${Constants.DEFAULT_TENANT_ID}")
@@ -346,19 +377,16 @@ class EventLoggingService private constructor() {
                 .build()
             
             httpClient.newCall(request).execute().use { response ->
-                // Debug print server response
-                if (is_debug_enabled) {
-                    Log.d(TAG, "=== SERVER RESPONSE DEBUG ===")
-                    Log.d(TAG, "Response Code: ${response.code}")
-                    Log.d(TAG, "Response Message: ${response.message}")
-                    Log.d(TAG, "Response Headers: ${response.headers}")
-                }
-
                 val responseBody = response.body?.string()
-                if (is_debug_enabled) {
-                    Log.d(TAG, "Response Body: $responseBody")
-                    Log.d(TAG, "==============================")
-                }
+                
+                // Centralized API logging for event server response
+                ApiLoggingUtils.logResponseDetails(
+                    code = response.code,
+                    message = response.message,
+                    headers = response.headers.toString(),
+                    body = responseBody,
+                    customTag = TAG
+                )
                 
                 if (!response.isSuccessful) {
                     if (is_debug_enabled) {
