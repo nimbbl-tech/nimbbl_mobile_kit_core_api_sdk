@@ -3,7 +3,6 @@ package tech.nimbbl.coreapisdk.utils.logging
 import android.util.Log
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.ResponseBody
 import okio.Buffer
 import tech.nimbbl.coreapisdk.core.constants.Constants.is_debug_enabled
 

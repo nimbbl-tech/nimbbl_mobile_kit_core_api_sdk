@@ -32,8 +32,6 @@ import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.BASE_URL
 import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.CHECKOUT_CANCEL
 import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.TRANSACTION_ENQUIRY
 import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.UPDATE_ORDER
-import tech.nimbbl.coreapisdk.core.constants.Constants.is_debug_enabled
-import tech.nimbbl.coreapisdk.utils.logging.ApiLoggingUtils
 import tech.nimbbl.coreapisdk.data.models.common.CheckoutResourceVo
 import tech.nimbbl.coreapisdk.data.models.common.InitiatePaymentResponse
 import tech.nimbbl.coreapisdk.data.models.common.PublicKeyResponse
@@ -48,6 +46,7 @@ import tech.nimbbl.coreapisdk.utils.extensions.getIPAddress
 import tech.nimbbl.coreapisdk.utils.extensions.md5
 import tech.nimbbl.coreapisdk.utils.extensions.printLog
 import tech.nimbbl.coreapisdk.utils.extensions.writeResponseBodyToDisk
+import tech.nimbbl.coreapisdk.utils.logging.ApiLoggingUtils
 
 
 /*

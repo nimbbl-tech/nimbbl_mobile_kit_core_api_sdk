@@ -8,8 +8,6 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
-import tech.nimbbl.coreapisdk.utils.logging.ApiLoggingUtils
-import tech.nimbbl.coreapisdk.core.constants.Constants.is_debug_enabled
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -23,6 +21,7 @@ import retrofit2.http.Url
 import tech.nimbbl.coreapisdk.api.models.responses.OrderResponse
 import tech.nimbbl.coreapisdk.api.models.responses.UpdateTransactionResponse
 import tech.nimbbl.coreapisdk.api.models.responses.transaction_enquiry.TransactionEnquiryResponseVo
+import tech.nimbbl.coreapisdk.core.constants.Constants.is_debug_enabled
 import tech.nimbbl.coreapisdk.core.constants.PayloadKeys.Companion.key_fingerPrint
 import tech.nimbbl.coreapisdk.core.constants.PayloadKeys.Companion.key_ipAddress
 import tech.nimbbl.coreapisdk.core.constants.PayloadKeys.Companion.key_userAgent
@@ -37,6 +36,7 @@ import tech.nimbbl.coreapisdk.data.models.payment.ListOfBankResponse
 import tech.nimbbl.coreapisdk.data.models.payment.ListOfWalletResponse
 import tech.nimbbl.coreapisdk.data.models.payment.PaymentModesResponse
 import tech.nimbbl.coreapisdk.utils.extensions.printLog
+import tech.nimbbl.coreapisdk.utils.logging.ApiLoggingUtils
 import java.util.concurrent.TimeUnit
 
 

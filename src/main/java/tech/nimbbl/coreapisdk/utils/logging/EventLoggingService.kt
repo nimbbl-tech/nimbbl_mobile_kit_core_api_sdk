@@ -21,7 +21,6 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import tech.nimbbl.coreapisdk.core.constants.Constants
 import tech.nimbbl.coreapisdk.core.constants.Constants.is_debug_enabled
-import tech.nimbbl.coreapisdk.utils.logging.ApiLoggingUtils
 import tech.nimbbl.coreapisdk.utils.DataMasker
 import tech.nimbbl.coreapisdk.utils.extensions.getDeviceInfo
 import tech.nimbbl.coreapisdk.utils.extensions.md5
