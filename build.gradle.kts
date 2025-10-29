@@ -39,11 +39,11 @@ android {
         }
         
         release {
-            isMinifyEnabled = true  // Enable SDK obfuscation
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            isMinifyEnabled = false  // Disable SDK obfuscation for compatibility
+            // proguardFiles(
+            //     getDefaultProguardFile("proguard-android-optimize.txt"),
+            //     "proguard-rules.pro"
+            // )
             // Release build uses gradle.properties values
         }
         

@@ -40,7 +40,9 @@
 
 # Keep constants classes used by other SDKs
 -keep class tech.nimbbl.coreapisdk.core.constants.EventConstants { *; }
+-keep class tech.nimbbl.coreapisdk.core.constants.EventConstants$* { *; }
 -keep class tech.nimbbl.coreapisdk.core.constants.PayloadKeys { *; }
+-keep class tech.nimbbl.coreapisdk.core.constants.PayloadKeys$* { *; }
 
 # Keep data model classes used for JSON serialization
 -keep class tech.nimbbl.coreapisdk.data.models.** {
