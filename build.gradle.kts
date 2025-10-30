@@ -39,7 +39,7 @@ android {
         }
         
         release {
-            isMinifyEnabled = false  // Enable SDK obfuscation
+            isMinifyEnabled = true  // Enable SDK obfuscation
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
