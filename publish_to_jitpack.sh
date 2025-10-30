@@ -127,6 +127,10 @@ check_git_repo() {
 
 # Function to ensure we are on master branch
 check_master_branch() {
+    # Allow snapshot releases from any branch
+    if [ "$SNAPSHOT_MODE" = true ]; then
+        return 0
+    fi
     local branch
     branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
     if [ "$branch" != "master" ]; then
