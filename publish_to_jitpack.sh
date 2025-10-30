@@ -15,6 +15,7 @@ NC='\033[0m' # No Color
 # Load environment variables from .env file if it exists
 if [ -f ".env" ]; then
     set -a  # automatically export all variables
+    # shellcheck disable=SC1091
     source .env
     set +a  # stop automatically exporting
 fi
@@ -22,12 +23,11 @@ fi
 # --------- Configuration ---------
 GITHUB_USERNAME="$GITHUB_USERNAME"
 REPO_NAME="$REPO_NAME"
+ARTIFACT_ID="nimbbl-checkout-core-sdk"
 VERSION_TAG=$1                   # e.g. v4.1.0
 DRY_RUN=false                    # Set to true for dry run mode
 SNAPSHOT_MODE=false              # Set to true for snapshot publishing
-REPO_IS_PRIVATE="$REPO_IS_PRIVATE"            # Set to true if your repository is private
-JITPACK_TRIGGER_BUILD="$JITPACK_TRIGGER_BUILD"        # Set to true only for private repos or manual triggers
-JITPACK_API_TOKEN="$JITPACK_API_TOKEN" # Use env var
+JITPACK_API_TOKEN="$JITPACK_API_TOKEN" # Optional
 VERSION_FILE="version.properties"
 # ----------------------------------
 
@@ -36,7 +36,7 @@ validate_environment() {
     local missing_vars=()
     
     if [ -z "$GITHUB_USERNAME" ]; then
-        missing_vars+=("BITBUCKET_USERNAME")
+        missing_vars+=("GITHUB_USERNAME")
     fi
     
     if [ -z "$REPO_NAME" ]; then
@@ -121,6 +121,17 @@ check_git() {
 check_git_repo() {
     if ! git rev-parse --git-dir > /dev/null 2>&1; then
         print_error "Not in a git repository"
+        exit 1
+    fi
+}
+
+# Function to ensure we are on master branch
+check_master_branch() {
+    local branch
+    branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+    if [ "$branch" != "master" ]; then
+        print_error "This publish script can only be run from the 'master' branch (current: '$branch')"
+        print_info "Please switch to 'master' or merge your changes before publishing."
         exit 1
     fi
 }
@@ -272,6 +283,12 @@ validate_environment
 check_git
 check_git_repo
 check_git_remote
+check_master_branch
+
+# Enforce trigger when private
+if [ "$REPO_IS_PRIVATE" = true ]; then
+    JITPACK_TRIGGER_BUILD=true
+fi
 
 # Check if version.properties exists
 if [ ! -f "$VERSION_FILE" ]; then
@@ -321,24 +338,12 @@ else
 fi
 
 # Step 3: JitPack Build Information
-if [ "$REPO_IS_PRIVATE" = true ]; then
-    if [ "$DRY_RUN" = true ]; then
-        print_dry_run "Private repository detected - manual build trigger may be required"
-        print_dry_run "Monitor build progress at: https://jitpack.io/#$GITHUB_USERNAME/$REPO_NAME/$VERSION_TAG"
-        print_dry_run "Make sure JitPack has access to your private repository"
-    else
-        print_info "Private repository detected - manual build trigger may be required"
-        print_info "Monitor build progress at: https://jitpack.io/#$GITHUB_USERNAME/$REPO_NAME/$VERSION_TAG"
-        print_warning "Ensure JitPack has access to your private repository at: https://jitpack.io"
-    fi
+if [ "$DRY_RUN" = true ]; then
+    print_dry_run "JitPack will automatically detect the new tag and start building"
+    print_dry_run "Monitor build progress at: https://jitpack.io/#$GITHUB_USERNAME/$REPO_NAME/$VERSION_TAG"
 else
-    if [ "$DRY_RUN" = true ]; then
-        print_dry_run "JitPack will automatically detect the new tag and start building"
-        print_dry_run "Monitor build progress at: https://jitpack.io/#$GITHUB_USERNAME/$REPO_NAME/$VERSION_TAG"
-    else
-        print_info "JitPack will automatically detect the new tag and start building"
-        print_info "Monitor build progress at: https://jitpack.io/#$GITHUB_USERNAME/$REPO_NAME/$VERSION_TAG"
-    fi
+    print_info "JitPack will automatically detect the new tag and start building"
+    print_info "Monitor build progress at: https://jitpack.io/#$GITHUB_USERNAME/$REPO_NAME/$VERSION_TAG"
 fi
 
 # Manual build trigger for private repos or troubleshooting
@@ -416,7 +421,7 @@ echo "    maven { url 'https://jitpack.io' }"
 echo "}"
 echo
 echo "dependencies {"
-echo "    implementation 'com.github.nimbbl-tech:$REPO_NAME:$VERSION_TAG'"
+echo "    implementation 'com.github.nimbbl-tech:$ARTIFACT_ID:$VERSION_TAG'"
 echo "}"
 echo "----------------------------------------"
 echo
