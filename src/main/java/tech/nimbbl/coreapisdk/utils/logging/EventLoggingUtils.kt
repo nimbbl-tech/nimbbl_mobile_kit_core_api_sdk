@@ -81,9 +81,15 @@ object EventLoggingUtils {
         }
         
         try {
-            val customAppInfo = if (sdkVersion != null) {
+            val customAppInfo = if (!sdkVersion.isNullOrBlank()) {
                 mapOf("appVersion" to sdkVersion)
-            } else null
+            } else {
+                // If SDK version is not provided, log a warning but don't fail
+                if (is_debug_enabled) {
+                    Log.w(TAG, "SDK version is null or empty for event '$eventName', will fallback to Core API SDK version")
+                }
+                null
+            }
             
             NimbblCoreApiSDK.getInstance()?.logEvent(
                 context,
@@ -130,9 +136,15 @@ object EventLoggingUtils {
             // Mask tokens in additional data URLs
             val maskedAdditionalData = maskTokensInAdditionalData(additionalData)
             
-            val customAppInfo = if (sdkVersion != null) {
+            val customAppInfo = if (!sdkVersion.isNullOrBlank()) {
                 mapOf("appVersion" to sdkVersion)
-            } else null
+            } else {
+                // If SDK version is not provided, log a warning but don't fail
+                if (is_debug_enabled) {
+                    Log.w(customTag, "SDK version is null or empty for event '$eventName', will fallback to Core API SDK version")
+                }
+                null
+            }
             
             NimbblCoreApiSDK.getInstance()?.logEvent(
                 context,
