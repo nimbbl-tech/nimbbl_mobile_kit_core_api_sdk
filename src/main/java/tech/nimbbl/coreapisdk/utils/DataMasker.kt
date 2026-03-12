@@ -39,12 +39,9 @@ object DataMasker {
             return "null"
         }
         
-        // If token is too short, return as is (but log a warning)
+        // If token is too short, mask entirely (never expose raw)
         if (token.length < MINIMUM_TOKEN_LENGTH) {
-            if (is_debug_enabled) {
-                Log.w(TAG, "Token too short for masking: ${token.length} characters")
-            }
-            return token
+            return "***"
         }
         
         // If token is exactly the minimum length, show first and last characters
@@ -93,5 +90,28 @@ object DataMasker {
         }
     }
 
-
+    /**
+     * Sanitizes request/response body for safe logging.
+     * Masks tokens and truncates long bodies to avoid PII exposure.
+     */
+    fun sanitizeForLogging(body: String?): String? {
+        if (body.isNullOrEmpty()) return body
+        return try {
+            var sanitized = body
+            // Mask JWT-like tokens in JSON (e.g. "token":"eyJ...")
+            val tokenInJson = Regex("(\"(?:token|access_token|accessToken)\"\\s*:\\s*)\"([^\"]+)\"")
+            sanitized = tokenInJson.replace(sanitized) { match ->
+                "${match.groupValues[1]}\"${maskToken(match.groupValues[2])}\""
+            }
+            // Mask Bearer tokens
+            val bearerPattern = Regex("(Bearer\\s+)([A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+){2})")
+            sanitized = bearerPattern.replace(sanitized) { match ->
+                "${match.groupValues[1]}${maskToken(match.groupValues[2])}"
+            }
+            if (sanitized.length > 500) sanitized.take(500) + "..." else sanitized
+        } catch (e: Exception) {
+            if (is_debug_enabled) Log.w(TAG, "sanitizeForLogging failed: ${e.message}")
+            "[truncated]"
+        }
+    }
 }

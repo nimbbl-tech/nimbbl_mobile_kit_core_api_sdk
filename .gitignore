@@ -2,3 +2,7 @@
 /.gradle/
 /.idea/
 /.gradle/
+
+# Local secrets - never commit
+.env
+gradle.properties

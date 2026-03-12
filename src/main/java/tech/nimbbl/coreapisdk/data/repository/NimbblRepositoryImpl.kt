@@ -1,10 +1,8 @@
 package tech.nimbbl.coreapisdk.data.repository
 
-import com.google.gson.Gson
-import com.google.gson.internal.LinkedTreeMap
-import okhttp3.RequestBody
 import org.json.JSONObject
-import retrofit2.Response
+import tech.nimbbl.coreapisdk.api.ApiResult
+import tech.nimbbl.coreapisdk.api.RawApiResponse
 import tech.nimbbl.coreapisdk.api.models.responses.OrderResponse
 import tech.nimbbl.coreapisdk.api.models.responses.UpdateTransactionResponse
 import tech.nimbbl.coreapisdk.api.models.responses.transaction_enquiry.TransactionEnquiryResponseVo
@@ -32,8 +30,6 @@ import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.BASE_URL
 import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.CHECKOUT_CANCEL
 import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.TRANSACTION_ENQUIRY
 import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.UPDATE_ORDER
-import tech.nimbbl.coreapisdk.core.constants.Constants.is_debug_enabled
-import tech.nimbbl.coreapisdk.utils.logging.ApiLoggingUtils
 import tech.nimbbl.coreapisdk.data.models.common.CheckoutResourceVo
 import tech.nimbbl.coreapisdk.data.models.common.InitiatePaymentResponse
 import tech.nimbbl.coreapisdk.data.models.common.PublicKeyResponse
@@ -43,12 +39,13 @@ import tech.nimbbl.coreapisdk.data.models.payment.BinDataResponse
 import tech.nimbbl.coreapisdk.data.models.payment.ListOfBankResponse
 import tech.nimbbl.coreapisdk.data.models.payment.ListOfWalletResponse
 import tech.nimbbl.coreapisdk.data.models.payment.PaymentModesResponse
+import tech.nimbbl.coreapisdk.utils.JsonParser
 import tech.nimbbl.coreapisdk.utils.extensions.getAPIRequestBody
 import tech.nimbbl.coreapisdk.utils.extensions.getIPAddress
 import tech.nimbbl.coreapisdk.utils.extensions.md5
-import tech.nimbbl.coreapisdk.utils.extensions.printLog
-import tech.nimbbl.coreapisdk.utils.extensions.writeResponseBodyToDisk
-
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import tech.nimbbl.coreapisdk.utils.logging.ApiLoggingUtils
 
 /*
 Created by Sandeep Yadav on 20/05/24.
@@ -57,78 +54,38 @@ Copyright (c) 2024 Bigital Technologies Pvt. Ltd. All rights reserved.
 class NimbblRepositoryImpl(
     private val apiService: CoreAppWebService,
 ) : NimbblRepository {
+
     override suspend fun updateCheckOutCancelReason(
         token: String,
         orderId: String,
         cancelReason: String
-    ): Response<Void> {
+    ): ApiResult<Unit> = withContext(Dispatchers.IO) {
         val jsonObject = JSONObject()
         jsonObject.put(key_OrderID, orderId)
         jsonObject.put("command", "order_cancel")
         jsonObject.put("cancellation_reason", cancelReason)
-        val body: RequestBody = getAPIRequestBody(jsonObject)
-        return apiService.cancelCheckout(BASE_URL + CHECKOUT_CANCEL, "Bearer $token", body)
+        val body = getAPIRequestBody(jsonObject)
+        val raw = apiService.cancelCheckout(BASE_URL + CHECKOUT_CANCEL, "Bearer $token", body)
+        if (raw.isSuccessful) {
+            ApiResult.success(Unit, raw.code, raw.message)
+        } else {
+            ApiResult.error(raw.code, raw.message, raw.rawBodyString)
+        }
     }
 
     override suspend fun getCheckOutResource(
         url: String,
         token: String,
         xNimbblKey: String
-    ): Response<CheckoutResourceVo> {
-
-        val response = apiService.checkOutResource(url, xNimbblKey, "Bearer $token")
-        
-        // Add null check for response.body()
-        val responseBody = response.body()
-        if (responseBody != null) {
-            val gson = Gson()
-            val jsonStr: String = gson.toJson(responseBody)
-            printLog("SAN", jsonStr)
-            
-            // Add null check for data
-            if (responseBody.data.isNotEmpty()) {
-                for (data in responseBody.data) {
-                    // Add null check for items
-                    if (data.items != null) {
-                        for (items in data.items!!) {
-                            // Temporarily comment out logo downloads to fix compilation
-                            // val code = items.app_code ?: items.sub_payment_code
-                            // code?.let { items.logo_url = downloadAndSaveLogo(items.logo_url, it) }
-                            
-                            // Add null check for items.items
-                            if (items.items is List<*>) {
-                                for (item in items.items) {
-                                    if (item is LinkedTreeMap<*, *>) {
-                                        // Temporarily comment out logo downloads to fix compilation
-                                        // val logoUrl = item["logo_url"]?.toString() ?: ""
-                                        // val filename = item["sub_payment_code"]?.toString() ?: ""
-                                        // downloadAndSaveLogo(logoUrl, filename)
-                                    }
-                                }
-                            }
-                            
-                            if (items.items is LinkedTreeMap<*, *>) {
-                                val schemes = items.items["schemes"]
-                                if (schemes is ArrayList<*>) {
-                                    for (obj in schemes) {
-                                        if (obj is LinkedTreeMap<*, *>) {
-                                            // Temporarily comment out logo downloads to fix compilation
-                                            // val logoUrl = obj["logo_url"]?.toString() ?: ""
-                                            // val fileName = obj["scheme_code"]?.toString() ?: ""
-                                            // downloadAndSaveLogo(logoUrl, fileName)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            printLog("SAN", "Response body is null")
-        }
-        
-        return response
+    ): ApiResult<CheckoutResourceVo> = withContext(Dispatchers.IO) {
+        val raw = apiService.checkOutResource(url, xNimbblKey, "Bearer $token")
+        val parsed = raw.body?.let { JsonParser.fromJson<CheckoutResourceVo>(it) }
+        ApiResult.fromNullable(
+            data = parsed,
+            code = raw.code,
+            message = raw.message,
+            rawBody = raw.rawBodyString
+        )
     }
 
     override suspend fun getListOfBanks(
@@ -136,12 +93,12 @@ class NimbblRepositoryImpl(
         token: String,
         xNimbblKey: String,
         orderId: String
-    ): Response<ListOfBankResponse> {
+    ): ApiResult<ListOfBankResponse> = withContext(Dispatchers.IO) {
         val jsonObject = JSONObject()
         jsonObject.put(key_OrderID, orderId)
-        val body: RequestBody = getAPIRequestBody(jsonObject)
-        val listOfBanksResponse = apiService.getListOfBanks(url, xNimbblKey, "Bearer $token", body)
-        return listOfBanksResponse
+        val body = getAPIRequestBody(jsonObject)
+        val raw = apiService.getListOfBanks(url, xNimbblKey, "Bearer $token", body)
+        toApiResult(raw) { JsonParser.fromJson<ListOfBankResponse>(it) }
     }
 
     override suspend fun getListOfWallets(
@@ -149,13 +106,12 @@ class NimbblRepositoryImpl(
         token: String,
         xNimbblKey: String,
         orderId: String
-    ): Response<ListOfWalletResponse> {
+    ): ApiResult<ListOfWalletResponse> = withContext(Dispatchers.IO) {
         val jsonObject = JSONObject()
         jsonObject.put(key_OrderID, orderId)
-        val body: RequestBody = getAPIRequestBody(jsonObject)
-        val listOfWalletResponse =
-            apiService.getListOfWallets(url, xNimbblKey, "Bearer $token", body)
-        return listOfWalletResponse
+        val body = getAPIRequestBody(jsonObject)
+        val raw = apiService.getListOfWallets(url, xNimbblKey, "Bearer $token", body)
+        toApiResult(raw) { JsonParser.fromJson<ListOfWalletResponse>(it) }
     }
 
     override suspend fun getPaymentModes(
@@ -164,37 +120,31 @@ class NimbblRepositoryImpl(
         xNimbblKey: String,
         orderId: String,
         userToken: String
-    ): Response<PaymentModesResponse> {
+    ): ApiResult<PaymentModesResponse> = withContext(Dispatchers.IO) {
         val jsonObject = JSONObject()
         jsonObject.put(key_OrderID, orderId)
-        val body: RequestBody = getAPIRequestBody(jsonObject)
-        val paymentModesResponse =
-            apiService.getPaymentModes(url, xNimbblKey, "Bearer $token", userToken, body)
-        return paymentModesResponse
+        val body = getAPIRequestBody(jsonObject)
+        val raw = apiService.getPaymentModes(url, xNimbblKey, "Bearer $token", userToken, body)
+        toApiResult(raw) { JsonParser.fromJson<PaymentModesResponse>(it) }
     }
 
     override suspend fun getOrderDetails(
         url: String,
         token: String
-    ): Response<OrderResponse> {
-        // Centralized API logging for request
+    ): ApiResult<OrderResponse> = withContext(Dispatchers.IO) {
         ApiLoggingUtils.logRequestDetails(
             method = "GET",
             url = url,
             customTag = "NimbblRepositoryImpl"
         )
-        
-        val response = apiService.getOrderDetails(url, "Bearer $token")
-        
-        // Centralized API logging for response
+        val raw = apiService.getOrderDetails(url, "Bearer $token")
         ApiLoggingUtils.logResponseDetails(
-            code = response.code(),
-            message = response.message(),
-            body = response.body()?.toString(),
+            code = raw.code,
+            message = raw.message,
+            body = raw.rawBodyString,
             customTag = "NimbblRepositoryImpl"
         )
-        
-        return response
+        toApiResult(raw) { JsonParser.fromJson<OrderResponse>(it) }
     }
 
     override suspend fun updateOrderDetails(
@@ -203,35 +153,29 @@ class NimbblRepositoryImpl(
         callback_mode: String,
         referrer_platform: String,
         referrer_platform_version: String
-    ): Response<OrderResponse> {
+    ): ApiResult<OrderResponse> = withContext(Dispatchers.IO) {
         val jsonObject = JSONObject()
         if (callback_mode.isNotEmpty()) {
             jsonObject.put(key_callback_mode, callback_mode)
         }
         jsonObject.put(key_referrer_platform, referrer_platform)
         jsonObject.put(key_OrderID, orderID)
-        jsonObject.put(key_referrer_platform_version, referrer_platform_version)
-        val body: RequestBody = getAPIRequestBody(jsonObject)
-        
-        // Centralized API logging for request
+        jsonObject.put(key_referrer_platform_version, referrer_platform_version.ifEmpty { "2.0.0" })
+        val body = getAPIRequestBody(jsonObject)
         ApiLoggingUtils.logRequestDetails(
             method = "PATCH",
             url = BASE_URL + UPDATE_ORDER,
             body = jsonObject.toString(),
             customTag = "NimbblRepositoryImpl"
         )
-        
-        val response = apiService.updateOrder(BASE_URL + UPDATE_ORDER, "Bearer $token", body)
-        
-        // Centralized API logging for response
+        val raw = apiService.updateOrder(BASE_URL + UPDATE_ORDER, "Bearer $token", body)
         ApiLoggingUtils.logResponseDetails(
-            code = response.code(),
-            message = response.message(),
-            body = response.body()?.toString(),
+            code = raw.code,
+            message = raw.message,
+            body = raw.rawBodyString,
             customTag = "NimbblRepositoryImpl"
         )
-        
-        return response
+        toApiResult(raw) { JsonParser.fromJson<OrderResponse>(it) }
     }
 
     override suspend fun resolveUser(
@@ -241,19 +185,17 @@ class NimbblRepositoryImpl(
         mobileNumber: String,
         deviceVerified: Boolean?,
         orderId: String
-    ): Response<ResolveUserResponse> {
+    ): ApiResult<ResolveUserResponse> = withContext(Dispatchers.IO) {
         val jsonObject = JSONObject()
         jsonObject.put(key_OrderID, orderId)
         jsonObject.put(PayloadKeys.key_mobileNumber, mobileNumber)
         jsonObject.put(PayloadKeys.key_deviceVerified, deviceVerified)
         jsonObject.put(PayloadKeys.key_userAgent, "")
         jsonObject.put(PayloadKeys.key_ipAddress, getIPAddress(true))
-        jsonObject.put(
-            PayloadKeys.key_fingerPrint,
-            md5("" + "")
-        )
-        val body: RequestBody = getAPIRequestBody(jsonObject)
-        return apiService.resolveUser(url, xNimbblKey, "Bearer $token", body)
+        jsonObject.put(PayloadKeys.key_fingerPrint, md5("" + ""))
+        val body = getAPIRequestBody(jsonObject)
+        val raw = apiService.resolveUser(url, xNimbblKey, "Bearer $token", body)
+        toApiResult(raw) { JsonParser.fromJson<ResolveUserResponse>(it) }
     }
 
     override suspend fun verifyUser(
@@ -263,21 +205,18 @@ class NimbblRepositoryImpl(
         mobileNumber: String,
         otp: String,
         orderId: String
-    ): Response<ResolveUserResponse> {
+    ): ApiResult<ResolveUserResponse> = withContext(Dispatchers.IO) {
         val jsonObject = JSONObject()
         jsonObject.put(key_OrderID, orderId)
         jsonObject.put(PayloadKeys.key_mobileNumber, mobileNumber)
         jsonObject.put(key_otp, otp)
         jsonObject.put(PayloadKeys.key_userAgent, "")
         jsonObject.put(PayloadKeys.key_ipAddress, getIPAddress(true))
-        jsonObject.put(
-            PayloadKeys.key_fingerPrint,
-            md5("" + "")
-        )
-        val body: RequestBody = getAPIRequestBody(jsonObject)
-        return apiService.verifyUser(url, xNimbblKey, "Bearer $token", body)
+        jsonObject.put(PayloadKeys.key_fingerPrint, md5("" + ""))
+        val body = getAPIRequestBody(jsonObject)
+        val raw = apiService.verifyUser(url, xNimbblKey, "Bearer $token", body)
+        toApiResult(raw) { JsonParser.fromJson<ResolveUserResponse>(it) }
     }
-
 
     override suspend fun initiatePayment(
         url: String,
@@ -289,7 +228,7 @@ class NimbblRepositoryImpl(
         subPaymentMode: String?,
         cardDetailJsonObj: String?,
         upiId: String?
-    ): Response<InitiatePaymentResponse> {
+    ): ApiResult<InitiatePaymentResponse> = withContext(Dispatchers.IO) {
         val jsonObject = JSONObject()
         jsonObject.put(key_OrderID, orderId)
         jsonObject.put(key_payment_mode, paymentMode)
@@ -305,14 +244,9 @@ class NimbblRepositoryImpl(
         if (upiId != null && upiId.isNotEmpty()) {
             jsonObject.put(key_upi_id, upiId)
         }
-        val body: RequestBody = getAPIRequestBody(jsonObject)
-        return apiService.initiatePayment(
-            url,
-            xNimbblKey,
-            "Bearer $token",
-            "",
-            body
-        )
+        val body = getAPIRequestBody(jsonObject)
+        val raw = apiService.initiatePayment(url, xNimbblKey, "Bearer $token", "", body)
+        toApiResult(raw) { JsonParser.fromJson<InitiatePaymentResponse>(it) }
     }
 
     override suspend fun makePayment(
@@ -326,7 +260,7 @@ class NimbblRepositoryImpl(
         upiId: String,
         flow: String,
         transactionId: String
-    ): Response<InitiatePaymentResponse> {
+    ): ApiResult<InitiatePaymentResponse> = withContext(Dispatchers.IO) {
         val jsonObject = JSONObject()
         jsonObject.put(key_OrderID, orderId)
         jsonObject.put(key_payment_mode, paymentMode)
@@ -335,18 +269,14 @@ class NimbblRepositoryImpl(
         jsonObject.put(key_upi_id, upiId)
         jsonObject.put(key_flow, flow)
         jsonObject.put(key_transaction_id, transactionId)
-        val body: RequestBody = getAPIRequestBody(jsonObject)
-        return apiService.makePayment(
-            url,
-            xNimbblKey,
-            "Bearer $token",
-            "",
-            body
-        )
+        val body = getAPIRequestBody(jsonObject)
+        val raw = apiService.makePayment(url, xNimbblKey, "Bearer $token", "", body)
+        toApiResult(raw) { JsonParser.fromJson<InitiatePaymentResponse>(it) }
     }
 
-    override suspend fun getPublicKey(url: String): Response<PublicKeyResponse> {
-        return apiService.getPublicKey(url)
+    override suspend fun getPublicKey(url: String): ApiResult<PublicKeyResponse> = withContext(Dispatchers.IO) {
+        val raw = apiService.getPublicKey(url)
+        toApiResult(raw) { JsonParser.fromJson<PublicKeyResponse>(it) }
     }
 
     override suspend fun getBinData(
@@ -355,12 +285,13 @@ class NimbblRepositoryImpl(
         xNimbblKey: String,
         orderId: String,
         cardNo: String
-    ): Response<BinDataResponse> {
+    ): ApiResult<BinDataResponse> = withContext(Dispatchers.IO) {
         val jsonObject = JSONObject()
         jsonObject.put(key_OrderID, orderId)
         jsonObject.put(key_card_number, cardNo.replace(" ", ""))
-        val body: RequestBody = getAPIRequestBody(jsonObject)
-        return apiService.getBinData(url, xNimbblKey, "Bearer $token", body)
+        val body = getAPIRequestBody(jsonObject)
+        val raw = apiService.getBinData(url, xNimbblKey, "Bearer $token", body)
+        toApiResult(raw) { JsonParser.fromJson<BinDataResponse>(it) }
     }
 
     override suspend fun updateTransactionDetail(
@@ -370,13 +301,14 @@ class NimbblRepositoryImpl(
         errorCode: String,
         consumerMessage: String,
         merchantMessage: String
-    ): Response<UpdateTransactionResponse> {
+    ): ApiResult<UpdateTransactionResponse> = withContext(Dispatchers.IO) {
         val jsonObject = JSONObject()
         jsonObject.put(key_nimbbl_error_code, errorCode)
         jsonObject.put(key_nimbbl_consumer_message, consumerMessage)
         jsonObject.put(key_nimbbl_merchant_message, merchantMessage)
-        val body: RequestBody = getAPIRequestBody(jsonObject)
-        return apiService.updateTransaction(url, "Bearer $token", body)
+        val body = getAPIRequestBody(jsonObject)
+        val raw = apiService.updateTransaction(url, "Bearer $token", body)
+        toApiResult(raw) { JsonParser.fromJson<UpdateTransactionResponse>(it) }
     }
 
     override suspend fun getTransactionEnquiry(
@@ -384,17 +316,18 @@ class NimbblRepositoryImpl(
         orderId: String,
         invoiceId: String,
         transactionId: String
-    ): Response<TransactionEnquiryResponseVo> {
+    ): ApiResult<TransactionEnquiryResponseVo> = withContext(Dispatchers.IO) {
         val jsonObject = JSONObject()
         jsonObject.put(key_OrderID, orderId)
         jsonObject.put(key_invoice, invoiceId)
         jsonObject.put(key_transaction_id, transactionId)
-        val body: RequestBody = getAPIRequestBody(jsonObject)
-        return apiService.getTransactionEnquiry(
+        val body = getAPIRequestBody(jsonObject)
+        val raw = apiService.getTransactionEnquiry(
             BASE_URL + TRANSACTION_ENQUIRY,
             "Bearer $token",
             body
         )
+        toApiResult(raw) { JsonParser.fromJson<TransactionEnquiryResponseVo>(it) }
     }
 
     override suspend fun resendOtp(
@@ -404,50 +337,28 @@ class NimbblRepositoryImpl(
         orderId: String,
         paymentMode: String,
         transactionId: String
-    ): Response<ResendOtpResponse> {
+    ): ApiResult<ResendOtpResponse> = withContext(Dispatchers.IO) {
         val jsonObject = JSONObject()
         jsonObject.put(key_OrderID, orderId)
         jsonObject.put(key_payment_mode, paymentMode)
         jsonObject.put(key_transaction_id, transactionId)
-        val body: RequestBody = getAPIRequestBody(jsonObject)
-        return apiService.resendOtp(url, xNimbblKey, "Bearer $token", body)
+        val body = getAPIRequestBody(jsonObject)
+        val raw = apiService.resendOtp(url, xNimbblKey, "Bearer $token", body)
+        toApiResult(raw) { JsonParser.fromJson<ResendOtpResponse>(it) }
     }
 
-    override fun setSubMerchantId(subMerchantId: String) {
+    override fun setSubMerchantId(subMerchantId: String) {}
+    override fun getSubMerchantId(): String = ""
+    override fun setMerchantPackageName(packageName: String) {}
+    override fun getSubMerchantPackageName(): String = ""
+
+    private fun <T> toApiResult(raw: RawApiResponse, parse: (JSONObject) -> T?): ApiResult<T> {
+        val data = raw.body?.let { parse(it) }
+        return ApiResult.fromNullable(
+            data = data,
+            code = raw.code,
+            message = raw.message,
+            rawBody = raw.rawBodyString
+        )
     }
-
-    override fun getSubMerchantId(): String {
-        return ""
-    }
-
-    override fun setMerchantPackageName(packageName: String) {
-    }
-
-    override fun getSubMerchantPackageName(): String {
-        return ""
-    }
-
-
-
-
-    private suspend fun downloadAndSaveLogo(
-        logoUrl: String?,
-        fileName: String,
-    ): String {
-        return if (logoUrl != null && logoUrl.isNotEmpty() && !logoUrl.equals("null", true)) {
-            val responseBody = apiService.downloadBankLogo(logoUrl)
-            val fileExtension = logoUrl.substring(logoUrl.lastIndexOf("."));
-            val savedFilePath =
-                writeResponseBodyToDisk("", responseBody.body(), fileName + fileExtension)
-            if (savedFilePath.isNotEmpty()) {
-                savedFilePath
-            } else {
-                ""
-            }
-        } else {
-            ""
-        }
-    }
-
-
 }

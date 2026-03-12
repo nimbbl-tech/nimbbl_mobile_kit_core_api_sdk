@@ -65,9 +65,8 @@ object ProcessOutputPayloads {
         val outputPayload = JSONObject()
         try {
             outputPayload.put(key_event, event_display_loader)
-
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("ProcessOutputPayloads", "Error creating loading show payload: ${e.message}", e)
         }
         return outputPayload
     }
@@ -77,41 +76,36 @@ object ProcessOutputPayloads {
         val outputPayload = JSONObject()
         try {
             outputPayload.put(key_event, event_hide_loader)
-
         } catch (e: Exception) {
-            e.printStackTrace()
-            // Log exception event
+            Log.e("ProcessOutputPayloads", "Error creating loading hide payload: ${e.message}", e)
         }
         return outputPayload
     }
 
 
-    fun getExceptionOccuredPayload(
+    fun getExceptionOccurredPayload(
         action: String,
         errorCode: String,
         errorMessage: String
     ): JSONObject {
         val outputPayload = JSONObject()
-        var tempErrorMeesage: String
+        var tempErrorMessage: String
         try {
             try {
                 val jObjError = JSONObject(errorMessage)
-                tempErrorMeesage = jObjError.getJSONObject("error").getString("message")
-            } catch (e: java.lang.Exception) {
-                // Add proper error logging instead of empty catch block
+                tempErrorMessage = jObjError.getJSONObject("error").getString("message")
+            } catch (e: Exception) {
                 Log.w("ProcessOutputPayloads", "Failed to parse error message JSON: ${e.message}", e)
-                // Keep original error message as fallback
-                tempErrorMeesage = errorMessage
+                tempErrorMessage = errorMessage
             }
             outputPayload.put(key_event, event_exception_occured)
             val nimbblOutputPayload = JSONObject()
             nimbblOutputPayload.put(key_action, action)
             nimbblOutputPayload.put(key_errorCode, errorCode)
-            nimbblOutputPayload.put(key_errorMessage, tempErrorMeesage)
+            nimbblOutputPayload.put(key_errorMessage, tempErrorMessage)
             outputPayload.put(key_nimbblPayload, nimbblOutputPayload)
         } catch (e: Exception) {
             Log.e("ProcessOutputPayloads", "Error creating exception payload: ${e.message}", e)
-            // Create a minimal error payload as fallback
             try {
                 outputPayload.put(key_event, event_exception_occured)
                 val nimbblOutputPayload = JSONObject()
@@ -136,8 +130,7 @@ object ProcessOutputPayloads {
             nimbblOutputPayload.put(key_next, action_paymentModes)
             outputPayload.put(key_nimbblPayload, nimbblOutputPayload)
         } catch (e: Exception) {
-            e.printStackTrace()
-            // Log exception event
+            Log.e("ProcessOutputPayloads", "Error creating initiate order payload: ${e.message}", e)
         }
         return outputPayload
     }
@@ -149,10 +142,12 @@ object ProcessOutputPayloads {
             val nimbblOutputPayload = JSONObject()
             nimbblOutputPayload.put(key_action, action_paymentModes)
             nimbblOutputPayload.put(key_status, status_success)
-            nimbblOutputPayload.put(key_paymentModes, JSONArray(paymentModeJson))
+            if (!paymentModeJson.isNullOrEmpty()) {
+                nimbblOutputPayload.put(key_paymentModes, JSONArray(paymentModeJson))
+            }
             outputPayload.put(key_nimbblPayload, nimbblOutputPayload)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("ProcessOutputPayloads", "Error creating payment mode payload: ${e.message}", e)
         }
         return outputPayload
     }
@@ -164,22 +159,22 @@ object ProcessOutputPayloads {
             val nimbblOutputPayload = JSONObject()
             nimbblOutputPayload.put(key_action, action_resolveUser)
             nimbblOutputPayload.put(key_status, status_success)
-            val firstName = body?.item?.first_name.toString()
-            val lastName = if (body?.item?.last_name.toString().equals("null", true)) {
-                ""
-            } else {
-                body?.item?.last_name.toString()
+
+            if (body != null && body.item != null) {
+                val firstName = body.item.first_name ?: ""
+                val lastName = if (body.item.last_name?.equals("null", true) == true || body.item.last_name.isNullOrEmpty()) {
+                    ""
+                } else {
+                    body.item.last_name ?: ""
+                }
+                nimbblOutputPayload.put(key_user_name, "$firstName $lastName".trim())
+                nimbblOutputPayload.put(key_mobileNumber, body.item.mobile_number ?: "")
             }
-                nimbblOutputPayload.put(
-                    key_user_name,
-                    "$firstName $lastName".trim()
-                )
-            nimbblOutputPayload.put(key_mobileNumber, body?.item?.mobile_number ?: "")
             nimbblOutputPayload.put(key_status, status_success)
             nimbblOutputPayload.put(key_next_step, body?.next_step ?: "payment_mode")
             outputPayload.put(key_nimbblPayload, nimbblOutputPayload)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("ProcessOutputPayloads", "Error creating resolve user payload: ${e.message}", e)
         }
         return outputPayload
     }
@@ -206,7 +201,7 @@ object ProcessOutputPayloads {
             nimbblOutputPayload.put(key_signature, signature)
             outputPayload.put(key_nimbblPayload, nimbblOutputPayload)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("ProcessOutputPayloads", "Error creating payment enquiry payload: ${e.message}", e)
         }
         return outputPayload
     }
@@ -228,7 +223,7 @@ object ProcessOutputPayloads {
             nimbblOutputPayload.put(key_transaction_id, transactionId)
             outputPayload.put(key_nimbblPayload, nimbblOutputPayload)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("ProcessOutputPayloads", "Error creating initiate payment payload: ${e.message}", e)
         }
         return outputPayload
     }
@@ -249,37 +244,41 @@ object ProcessOutputPayloads {
             nimbblOutputPayload.put(key_transaction_id, transactionId)
             outputPayload.put(key_nimbblPayload, nimbblOutputPayload)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("ProcessOutputPayloads", "Error creating complete payment payload: ${e.message}", e)
         }
         return outputPayload
     }
 
-    fun getBinDataResponsePayload(body: BinData): JSONObject {
+    fun getBinDataResponsePayload(body: BinData?): JSONObject {
         val outputPayload = JSONObject()
         try {
             outputPayload.put(key_event, event_process_result)
             val nimbblOutputPayload = JSONObject()
             nimbblOutputPayload.put(key_action, action_getBinData)
-            nimbblOutputPayload.put(key_issuer_name, body.issuingBank)
-            nimbblOutputPayload.put(key_issuer_name, body.issuingBank)
-            when {
-                body.cardCategory.equals("CC",true) -> {
-                    nimbblOutputPayload.put(key_sub_payment_code,value_sub_payment_code_credit)
-                    nimbblOutputPayload.put(key_sub_payment_name,value_payment_mode_credit_card)
+
+            // Handle null safely
+            if (body != null) {
+                nimbblOutputPayload.put(key_issuer_name, body.issuingBank ?: "")
+
+                when {
+                    body.cardCategory?.equals("CC", true) == true -> {
+                        nimbblOutputPayload.put(key_sub_payment_code, value_sub_payment_code_credit)
+                        nimbblOutputPayload.put(key_sub_payment_name, value_payment_mode_credit_card)
+                    }
+                    body.cardCategory?.equals("DC", true) == true -> {
+                        nimbblOutputPayload.put(key_sub_payment_code, value_sub_payment_code_debit)
+                        nimbblOutputPayload.put(key_sub_payment_name, value_payment_mode_debit_card)
+                    }
+                    body.cardCategory?.equals("PC", true) == true -> {
+                        nimbblOutputPayload.put(key_sub_payment_code, value_sub_payment_code_prepaid)
+                        nimbblOutputPayload.put(key_sub_payment_name, value_payment_mode_prepaid_card)
+                    }
                 }
-                body.cardCategory.equals("DC",true) -> {
-                    nimbblOutputPayload.put(key_sub_payment_code, value_sub_payment_code_debit)
-                    nimbblOutputPayload.put(key_sub_payment_name, value_payment_mode_debit_card)
-                }
-                body.cardCategory.equals("PC",true) -> {
-                    nimbblOutputPayload.put(key_sub_payment_code, value_sub_payment_code_prepaid)
-                    nimbblOutputPayload.put(key_sub_payment_name, value_payment_mode_prepaid_card)
-                }
+                nimbblOutputPayload.put(key_scheme_name, body.n_card_type ?: "")
             }
-            nimbblOutputPayload.put(key_scheme_name, body.n_card_type)
             outputPayload.put(key_nimbblPayload, nimbblOutputPayload)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("ProcessOutputPayloads", "Error creating BinData response payload: ${e.message}", e)
         }
         return outputPayload
     }
@@ -294,7 +293,7 @@ object ProcessOutputPayloads {
             nimbblOutputPayload.put(key_next, action_completePayment)
             outputPayload.put(key_nimbblPayload, nimbblOutputPayload)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("ProcessOutputPayloads", "Error creating resend OTP payload: ${e.message}", e)
         }
         return outputPayload
     }
@@ -304,12 +303,12 @@ object ProcessOutputPayloads {
         try {
             outputPayload.put(key_event, event_process_result)
             val nimbblOutputPayload = JSONObject()
-            nimbblOutputPayload.put(status_success, true)
+            nimbblOutputPayload.put(key_status, status_success)
             nimbblOutputPayload.put(key_action, action_validateCard)
             nimbblOutputPayload.put(key_next, action_initiatePayment)
             outputPayload.put(key_nimbblPayload, nimbblOutputPayload)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("ProcessOutputPayloads", "Error creating card validate payload: ${e.message}", e)
         }
         return outputPayload
     }
@@ -325,16 +324,16 @@ object ProcessOutputPayloads {
         try {
             outputPayload.put(key_event, event_process_result)
             val nimbblOutputPayload = JSONObject()
-            nimbblOutputPayload.put(status_success, status)
+            nimbblOutputPayload.put(key_status, status ?: status_success)
             nimbblOutputPayload.put(key_action, action_initiatePayment)
             nimbblOutputPayload.put(key_next, action_completePayment)
             nimbblOutputPayload.put(key_payment_mode, paymentMode)
-            nimbblOutputPayload.put(key_vpa_id, vpa)
-            nimbblOutputPayload.put(key_vpa_valid, vpaValid)
-            nimbblOutputPayload.put(key_vpa_account_holder, payerAccountName)
+            nimbblOutputPayload.put(key_vpa_id, vpa ?: "")
+            nimbblOutputPayload.put(key_vpa_valid, vpaValid ?: 0)
+            nimbblOutputPayload.put(key_vpa_account_holder, payerAccountName ?: "")
             outputPayload.put(key_nimbblPayload, nimbblOutputPayload)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("ProcessOutputPayloads", "Error creating UPI ID response payload: ${e.message}", e)
         }
         return outputPayload
     }

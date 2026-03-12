@@ -12,6 +12,7 @@ import android.net.NetworkCapabilities
 import android.os.Build
 import android.util.Base64
 import com.auth0.android.jwt.JWT
+import tech.nimbbl.coreapisdk.core.constants.EventConstants
 import tech.nimbbl.coreapisdk.utils.logging.EventLoggingUtils
 import java.io.ByteArrayOutputStream
 import java.math.BigInteger
@@ -82,12 +83,12 @@ fun getSessionID(): String {
  */
 fun getDeviceInfo(context: Context): Map<String, String> {
     return mapOf(
-        "manufacturer" to (Build.MANUFACTURER ?: "unknown"),
-        "model" to (Build.MODEL ?: "unknown"),
-        "os_version" to (Build.VERSION.RELEASE ?: "unknown"),
-        "sdk_version" to Build.VERSION.SDK_INT.toString(),
-        "screen_density" to context.resources.displayMetrics.densityDpi.toString(),
-        "screen_resolution" to "${context.resources.displayMetrics.widthPixels}x${context.resources.displayMetrics.heightPixels}"
+        EventConstants.KEY_DEVICE_MANUFACTURER to (Build.MANUFACTURER ?: "unknown"),
+        EventConstants.KEY_DEVICE_MODEL to (Build.MODEL ?: "unknown"),
+        EventConstants.KEY_DEVICE_OS_VERSION to (Build.VERSION.RELEASE ?: "unknown"),
+        EventConstants.KEY_DEVICE_SDK_VERSION to Build.VERSION.SDK_INT.toString(),
+        EventConstants.KEY_DEVICE_SCREEN_DENSITY to context.resources.displayMetrics.densityDpi.toString(),
+        EventConstants.KEY_DEVICE_SCREEN_RESOLUTION to "${context.resources.displayMetrics.widthPixels}x${context.resources.displayMetrics.heightPixels}"
     )
 }
 

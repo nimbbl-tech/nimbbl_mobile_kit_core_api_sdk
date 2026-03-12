@@ -1,16 +1,11 @@
 package tech.nimbbl.coreapisdk.utils.extensions
 
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.ResponseBody
 import org.json.JSONArray
 import org.json.JSONObject
 import tech.nimbbl.coreapisdk.core.constants.Constants.is_debug_enabled
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
 import java.math.BigInteger
 import java.net.InetAddress
 import java.net.NetworkInterface
@@ -32,8 +27,8 @@ fun printLog(tag: String, message: String) {
 }
 
 
-fun getAPIRequestBody(jsonObject: JSONObject) =
-    jsonObject.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
+fun getAPIRequestBody(jsonObject: JSONObject): String =
+    jsonObject.toString()
 
 fun getXNimbblKey(subMerchantId: String, input: String): String {
     val md = MessageDigest.getInstance("MD5")
@@ -41,7 +36,6 @@ fun getXNimbblKey(subMerchantId: String, input: String): String {
     return "$subMerchantId-$md5"
 }
 
-// md5 function moved to NimbblSDKExtensions.kt to avoid conflicts
 
 
 /**
@@ -66,61 +60,36 @@ fun getIPAddress(useIPv4: Boolean): String {
                         } else {
                             if (!isIPv4) {
                                 val delim = sAddr.indexOf('%') // drop ip6 zone suffix
-                                return if (delim < 0) sAddr.uppercase() else sAddr.substring(
-                                    0,
-                                    delim
-                                ).uppercase()
+                                return if (delim < 0) sAddr.uppercase() else sAddr.take(delim).uppercase()
                             } else return ""
                         }
                     }
                 }
             }
         }
-    } catch (ignored: java.lang.Exception) {
-    } // for now eat exceptions
+    } catch (e: Exception) {
+        if (is_debug_enabled) {
+            android.util.Log.w("NimbblCoreSdk", "getIPAddress failed: ${e.message}")
+        }
+    }
     return ""
 }
 
 
-fun writeResponseBodyToDisk(destnUrl: String, body: ResponseBody?, fileName: String): String {
+fun writeResponseBodyToDisk(destnUrl: String, body: ByteArray?, fileName: String): String {
+    if (body == null) return ""
     return try {
-        var inputStream: InputStream? = null
-        var outputStream: OutputStream? = null
-        try {
-            val fileReader = ByteArray(4096)
-            var fileSizeDownloaded: Long = 0
-            if (body != null) {
-                inputStream = body.byteStream()
-            }
-            if (createDirIfNotExists(destnUrl)) {
-                val outputFile = File(File(destnUrl), fileName)
-                try {
-                    outputFile.createNewFile()
-                    outputStream = FileOutputStream(outputFile)
-                    while (true) {
-                        val read: Int = inputStream!!.read(fileReader)
-                        if (read == -1) {
-                            break
-                        }
-                        outputStream.write(fileReader, 0, read)
-                        fileSizeDownloaded += read.toLong()
-                    }
-                    outputStream.flush()
-                    outputFile.absolutePath
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                    ""
-                }
-
-            } else {
+        if (createDirIfNotExists(destnUrl)) {
+            val outputFile = File(File(destnUrl), fileName)
+            try {
+                outputFile.createNewFile()
+                FileOutputStream(outputFile).use { it.write(body); it.flush() }
+                outputFile.absolutePath
+            } catch (e: IOException) {
+                e.printStackTrace()
                 ""
             }
-        } catch (e: IOException) {
-            ""
-        } finally {
-            inputStream?.close()
-            outputStream?.close()
-        }
+        } else ""
     } catch (e: IOException) {
         ""
     }
@@ -128,16 +97,12 @@ fun writeResponseBodyToDisk(destnUrl: String, body: ResponseBody?, fileName: Str
 
 
 fun createDirIfNotExists(path: String): Boolean {
-    var ret = true
     val file = File(path)
-    if (!file.exists()) {
-        if (!file.mkdirs()) {
-            ret = false
-        }
+    return if (!file.exists()) {
+        file.mkdirs()
     } else {
-        file.delete()
+        file.isDirectory
     }
-    return ret
 }
 
 fun JSONObject.toMap(): Map<String, *> = keys().asSequence().associateWith {
@@ -151,9 +116,4 @@ fun JSONObject.toMap(): Map<String, *> = keys().asSequence().associateWith {
         JSONObject.NULL -> null
         else -> value
     }
-
-
 }
-
-
-

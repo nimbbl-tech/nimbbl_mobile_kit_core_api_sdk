@@ -9,7 +9,7 @@ data class ExtraInfo(
     val vpa_account_holder: String?,
     var vpa_id: String?,
     val vpa_provider: String?,
-    var app_package_name: String,
+    var app_package_name: String?,
     val payment_type: String?,
     val server_intent: Boolean?
 )

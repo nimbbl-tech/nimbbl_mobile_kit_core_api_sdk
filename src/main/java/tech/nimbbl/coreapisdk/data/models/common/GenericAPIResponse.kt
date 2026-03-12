@@ -7,8 +7,7 @@ Copyright (c) 2022 Bigital Technologies Pvt Ltd. All rights reserved.
 
 
 
- data class GenericAPIResponse (
-     var isSuccess: Boolean = false,
-    var code: Int = 0,
-
- )
+data class GenericAPIResponse(
+    var isSuccess: Boolean? = false,
+    var code: Int? = 0
+)

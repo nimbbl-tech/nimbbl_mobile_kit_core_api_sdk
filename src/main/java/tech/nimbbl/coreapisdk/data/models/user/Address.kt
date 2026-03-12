@@ -1,13 +1,13 @@
 package tech.nimbbl.coreapisdk.data.models.user
 
 data class Address(
-    val address_1: String,
-    val address_id: String,
-    val address_type: String,
-    val area: String,
-    val city: String,
-    val landmark: String,
-    val pincode: String,
-    val state: String,
-    val street: String
+    val address_1: String?,
+    val address_id: String?,
+    val address_type: String?,
+    val area: String?,
+    val city: String?,
+    val landmark: String?,
+    val pincode: String?,
+    val state: String?,
+    val street: String?
 )
