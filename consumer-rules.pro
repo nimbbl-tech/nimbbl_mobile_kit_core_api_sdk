@@ -10,6 +10,15 @@
 -keep class com.auth0.android.jwt.** { *; }
 -keep class com.auth0.jwt.** { *; }
 
+# Auth0 uses Gson TypeToken internally; keep generic signatures to avoid:
+# java.lang.RuntimeException: Missing type parameter.
+-keepattributes Signature
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
+-keepclassmembers class * extends com.google.gson.reflect.TypeToken {
+    <init>(...);
+}
+
 # JWT parsing methods
 -keep class tech.nimbbl.coreapisdk.utils.extensions.NimbblSDKExtensions {
     public static java.lang.String parseJwtToken(android.content.Context, java.lang.String);
