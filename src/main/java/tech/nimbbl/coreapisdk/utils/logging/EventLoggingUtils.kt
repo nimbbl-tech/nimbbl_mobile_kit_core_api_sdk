@@ -9,6 +9,7 @@ import android.content.Context
 import android.util.Log
 import tech.nimbbl.coreapisdk.core.NimbblCoreApiSDK
 import tech.nimbbl.coreapisdk.core.constants.Constants.is_debug_enabled
+import tech.nimbbl.coreapisdk.core.constants.EventConstants
 import tech.nimbbl.coreapisdk.utils.DataMasker
 
 /**
@@ -81,9 +82,15 @@ object EventLoggingUtils {
         }
         
         try {
-            val customAppInfo = if (sdkVersion != null) {
-                mapOf("appVersion" to sdkVersion)
-            } else null
+            val customAppInfo = if (!sdkVersion.isNullOrBlank()) {
+                mapOf(EventConstants.KEY_APP_VERSION to sdkVersion)
+            } else {
+                // If SDK version is not provided, log a warning but don't fail
+                if (is_debug_enabled) {
+                    Log.w(TAG, "SDK version is null or empty for event '$eventName', will fallback to Core API SDK version")
+                }
+                null
+            }
             
             NimbblCoreApiSDK.getInstance()?.logEvent(
                 context,
@@ -102,53 +109,5 @@ object EventLoggingUtils {
             }
         }
     }
-    
-    // Context-free version removed as NimbblCoreApiSDK.logEvent requires a non-null Context
-    
-    /**
-     * Safely log an event with a custom tag for better debugging
-     * @param context The context for logging
-     * @param eventName The name of the event to log
-     * @param orderId Optional order ID for the event
-     * @param token Optional token for the event
-     * @param subMerchantId Optional sub merchant ID for the event
-     * @param additionalData Optional additional data for the event
-     * @param customTag Custom tag for the log message
-     * @param sdkVersion Optional SDK version for the event
-     */
-    fun safeLogEvent(
-        context: Context,
-        eventName: String,
-        orderId: String? = null,
-        token: String? = null,
-        subMerchantId: String? = null,
-        additionalData: Map<String, Any>? = null,
-        customTag: String,
-        sdkVersion: String? = null
-    ) {
-        try {
-            // Mask tokens in additional data URLs
-            val maskedAdditionalData = maskTokensInAdditionalData(additionalData)
-            
-            val customAppInfo = if (sdkVersion != null) {
-                mapOf("appVersion" to sdkVersion)
-            } else null
-            
-            NimbblCoreApiSDK.getInstance()?.logEvent(
-                context,
-                eventName,
-                orderId,
-                token,
-                subMerchantId,
-                maskedAdditionalData,
-                null, // customUserAgent
-                null, // customDeviceInfo
-                customAppInfo
-            )
-        } catch (e: Exception) {
-            if (is_debug_enabled) {
-                Log.w(customTag, "Event logging failed for $eventName: ${e.message}")
-            }
-        }
-    }
+
 } 

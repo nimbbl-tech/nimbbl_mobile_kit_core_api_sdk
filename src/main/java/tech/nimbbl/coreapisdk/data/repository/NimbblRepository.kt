@@ -1,6 +1,6 @@
 package tech.nimbbl.coreapisdk.data.repository
 
-import retrofit2.Response
+import tech.nimbbl.coreapisdk.api.ApiResult
 import tech.nimbbl.coreapisdk.api.models.responses.OrderResponse
 import tech.nimbbl.coreapisdk.api.models.responses.UpdateTransactionResponse
 import tech.nimbbl.coreapisdk.api.models.responses.transaction_enquiry.TransactionEnquiryResponseVo
@@ -23,28 +23,27 @@ interface NimbblRepository {
 
     suspend fun updateCheckOutCancelReason(
         token: String, orderId: String, cancelReason: String
-    ): Response<Void>
-
+    ): ApiResult<Unit>
 
     suspend fun getCheckOutResource(
         url: String, token: String, xNimbblKey: String
-    ): Response<CheckoutResourceVo>
+    ): ApiResult<CheckoutResourceVo>
 
     suspend fun getListOfBanks(
         url: String, token: String, xNimbblKey: String, orderId: String
-    ): Response<ListOfBankResponse>
+    ): ApiResult<ListOfBankResponse>
 
     suspend fun getListOfWallets(
         url: String, token: String, xNimbblKey: String, orderId: String
-    ): Response<ListOfWalletResponse>
+    ): ApiResult<ListOfWalletResponse>
 
     suspend fun getPaymentModes(
         url: String, token: String, xNimbblKey: String, orderId: String, userToken: String
-    ): Response<PaymentModesResponse>
+    ): ApiResult<PaymentModesResponse>
 
     suspend fun getOrderDetails(
         url: String, token: String
-    ): Response<OrderResponse>
+    ): ApiResult<OrderResponse>
 
     suspend fun updateOrderDetails(
         token: String,
@@ -52,7 +51,7 @@ interface NimbblRepository {
         callback_mode: String,
         referrer_platform: String,
         referrer_platform_version: String
-    ): Response<OrderResponse>
+    ): ApiResult<OrderResponse>
 
     suspend fun resolveUser(
         url: String,
@@ -61,7 +60,7 @@ interface NimbblRepository {
         mobileNumber: String,
         deviceVerified: Boolean?,
         orderId: String
-    ): Response<ResolveUserResponse>
+    ): ApiResult<ResolveUserResponse>
 
     suspend fun verifyUser(
         url: String,
@@ -70,8 +69,7 @@ interface NimbblRepository {
         mobileNumber: String,
         otp: String,
         orderId: String
-    ): Response<ResolveUserResponse>
-
+    ): ApiResult<ResolveUserResponse>
 
     suspend fun initiatePayment(
         url: String,
@@ -83,8 +81,7 @@ interface NimbblRepository {
         subPaymentMode: String?,
         cardDetailJsonObj: String?,
         upiId: String?
-
-    ): Response<InitiatePaymentResponse>
+    ): ApiResult<InitiatePaymentResponse>
 
     suspend fun makePayment(
         url: String,
@@ -97,13 +94,13 @@ interface NimbblRepository {
         upiId: String,
         flow: String,
         transactionId: String,
-    ): Response<InitiatePaymentResponse>
+    ): ApiResult<InitiatePaymentResponse>
 
-    suspend fun getPublicKey(url: String): Response<PublicKeyResponse>
+    suspend fun getPublicKey(url: String): ApiResult<PublicKeyResponse>
 
     suspend fun getBinData(
         url: String, token: String, xNimbblKey: String, orderId: String, cardNo: String
-    ): Response<BinDataResponse>
+    ): ApiResult<BinDataResponse>
 
     suspend fun updateTransactionDetail(
         url: String,
@@ -112,11 +109,11 @@ interface NimbblRepository {
         errorCode: String,
         consumerMessage: String,
         merchantMessage: String
-    ): Response<UpdateTransactionResponse>
+    ): ApiResult<UpdateTransactionResponse>
 
     suspend fun getTransactionEnquiry(
         token: String, orderId: String, invoiceId: String, transactionId: String
-    ): Response<TransactionEnquiryResponseVo>
+    ): ApiResult<TransactionEnquiryResponseVo>
 
     suspend fun resendOtp(
         url: String,
@@ -125,13 +122,10 @@ interface NimbblRepository {
         orderId: String,
         paymentMode: String,
         transactionId: String
-    ): Response<ResendOtpResponse>
+    ): ApiResult<ResendOtpResponse>
 
     fun setSubMerchantId(subMerchantId: String)
     fun getSubMerchantId(): String
     fun setMerchantPackageName(packageName: String)
     fun getSubMerchantPackageName(): String
-
-
-
 }

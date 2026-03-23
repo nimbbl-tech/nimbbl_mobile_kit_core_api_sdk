@@ -1,6 +1,28 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Properties
 
+// Load .env into project properties (so findProperty works). .env is gitignored.
+val envFile = rootProject.file(".env")
+if (envFile.exists()) {
+    envFile.reader().use { reader ->
+        reader.readLines().forEach { line ->
+            val trimmed = line.trim()
+            if (trimmed.isNotEmpty() && !trimmed.startsWith("#")) {
+                val idx = trimmed.indexOf('=')
+                if (idx > 0) {
+                    val key = trimmed.substring(0, idx).trim()
+                    val value = trimmed.substring(idx + 1).trim()
+                        .removeSurrounding("\"").removeSurrounding("'")
+                    if (!project.hasProperty(key)) {
+                        // Make available to project.findProperty(...)
+                        rootProject.extensions.extraProperties.set(key, value)
+                    }
+                }
+            }
+        }
+    }
+}
+
 // Load version properties
 val versionProperties = Properties()
 val versionPropertiesFile = file("version.properties")
@@ -10,9 +32,22 @@ if (versionPropertiesFile.exists()) {
 
 plugins {
     id("com.android.library")
-    kotlin("android") version "1.9.0"
+    kotlin("android") version "1.9.0"  // LTS Kotlin version for maximum merchant app compatibility
     id("maven-publish")
+    id("signing")
 }
+
+// Dependency versions - Using stable versions for maximum merchant app compatibility
+val gradleWrapperVersion = "8.2"
+val coreKtxVersion = "1.12.0"
+val appCompatVersion = "1.6.1"
+val coroutinesVersion = "1.7.3"
+val jwtDecodeVersion = "2.0.0"
+val junitVersion = "4.13.2"
+val junitExtVersion = "1.1.5"
+val espressoVersion = "3.5.1"
+
+// No OkHttp/Retrofit/Gson - uses java.net.HttpURLConnection and org.json (built-in)
 
 android {
     namespace = "tech.nimbbl.coreapisdk"
@@ -64,7 +99,7 @@ android {
 }
 
 tasks.register<Wrapper>("nimbbl_coreapisdk_wrapper") {
-    gradleVersion = "8.11.1"
+    gradleVersion = gradleWrapperVersion
 }
 
 
@@ -77,41 +112,46 @@ tasks.withType<KotlinCompile> {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.squareup.retrofit2:retrofit:2.11.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    implementation("com.auth0.android:jwtdecode:2.0.0")
-    
+    implementation("androidx.core:core-ktx:$coreKtxVersion")
+    implementation("androidx.appcompat:appcompat:$appCompatVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion")
+    implementation("com.auth0.android:jwtdecode:$jwtDecodeVersion")
+
+    testImplementation("junit:junit:$junitVersion")
+    androidTestImplementation("androidx.test.ext:junit:$junitExtVersion")
+    androidTestImplementation("androidx.test.espresso:espresso-core:$espressoVersion")
 }
+
+// Maven Central coordinates (tech.nimbbl namespace)
+val PUBLISH_GROUP_ID = "tech.nimbbl"
+val PUBLISH_ARTIFACT_ID_CORE = "core-api-sdk"
+val PUBLISH_VERSION = versionProperties.getProperty("SDK_VERSION", "1.0.0")
+
+group = PUBLISH_GROUP_ID
+version = PUBLISH_VERSION
 
 afterEvaluate {
     publishing {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
-                
-                // JitPack coordinates (for backward compatibility)
-                groupId = "com.github.nimbbl-tech"
-                artifactId = "nimbbl-checkout-core-sdk"
-                version = versionProperties.getProperty("SDK_VERSION", "1.0.0")
+                groupId = PUBLISH_GROUP_ID
+                artifactId = PUBLISH_ARTIFACT_ID_CORE
+                version = PUBLISH_VERSION
 
                 pom {
-                    name.set("Nimbbl Checkout Core SDK")
-                    description.set("Nimbbl Checkout Core SDK for Android - Semantic Version ${versionProperties.getProperty("SDK_VERSION", "1.0.0")}")
+                    name.set("Nimbbl Core API SDK")
+                    description.set("Nimbbl Checkout Core API SDK for Android - payments, order and transaction APIs.")
                     url.set("https://github.com/nimbbl-tech/nimbbl_mobile_kit_core_api_sdk")
-                    
+                    packaging = "aar"
+
                     licenses {
                         license {
                             name.set("MIT License")
                             url.set("https://opensource.org/licenses/MIT")
                         }
                     }
-                    
+
                     developers {
                         developer {
                             id.set("nimbbl-tech")
@@ -119,7 +159,7 @@ afterEvaluate {
                             email.set("tech@nimbbl.biz")
                         }
                     }
-                    
+
                     scm {
                         connection.set("scm:git:git://github.com/nimbbl-tech/nimbbl_mobile_kit_core_api_sdk.git")
                         developerConnection.set("scm:git:ssh://github.com/nimbbl-tech/nimbbl_mobile_kit_core_api_sdk.git")
@@ -128,7 +168,31 @@ afterEvaluate {
                 }
             }
         }
+        repositories {
+            maven {
+                name = "sonatype"
+                url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
+                credentials {
+                    username = project.findProperty("centralPortalUsername") as String?
+                        ?: System.getenv("CENTRAL_PORTAL_USERNAME")
+                        ?: project.findProperty("ossrhTokenUsername") as String?
+                        ?: System.getenv("OSSRH_TOKEN_USERNAME")
+                        ?: ""
+                    password = project.findProperty("centralPortalPassword") as String?
+                        ?: System.getenv("CENTRAL_PORTAL_PASSWORD")
+                        ?: project.findProperty("ossrhTokenSecret") as String?
+                        ?: System.getenv("OSSRH_TOKEN_SECRET")
+                        ?: ""
+                }
+            }
+        }
+    }
+    signing {
+        val signingKeyId: String? = project.findProperty("signing.keyId") as String?
+        val signingPassword: String? = project.findProperty("signing.password") as String?
+        val signingKey: String? = project.findProperty("signing.secretKeyRingFile") as String?
+        if (signingKeyId != null && signingPassword != null && signingKey != null) {
+            sign(publishing.publications["release"])
+        }
     }
 }
-
-

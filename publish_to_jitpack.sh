@@ -125,13 +125,20 @@ check_git_repo() {
     fi
 }
 
-# Function to ensure we are on master branch
+# Function to ensure we are on master or release branch
 check_master_branch() {
     local branch
     branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
-    if [ "$branch" != "master" ]; then
-        print_error "This publish script can only be run from the 'master' branch (current: '$branch')"
-        print_info "Please switch to 'master' or merge your changes before publishing."
+    
+    # Allow master branch or release branches
+    if [[ "$branch" == "master" ]] || [[ "$branch" == release/* ]]; then
+        return 0
+    elif [ "$SNAPSHOT_MODE" == "true" ]; then
+        # Allow any branch for snapshot releases
+        return 0
+    else
+        print_error "This publish script can only be run from 'master' or 'release/*' branch (current: '$branch')"
+        print_info "Please switch to 'master' or a 'release/*' branch, or use --snapshot for snapshot publishing."
         exit 1
     fi
 }

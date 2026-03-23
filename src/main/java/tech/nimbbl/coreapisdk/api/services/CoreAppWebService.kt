@@ -1,179 +1,28 @@
 package tech.nimbbl.coreapisdk.api.services
 
 import android.util.Log
-import com.google.gson.GsonBuilder
-import okhttp3.Interceptor
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody
-import okhttp3.ResponseBody
-import okhttp3.logging.HttpLoggingInterceptor
-import tech.nimbbl.coreapisdk.utils.logging.ApiLoggingUtils
-import tech.nimbbl.coreapisdk.core.constants.Constants.is_debug_enabled
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.Header
-import retrofit2.http.PATCH
-import retrofit2.http.POST
-import retrofit2.http.PUT
-import retrofit2.http.Url
-import tech.nimbbl.coreapisdk.api.models.responses.OrderResponse
-import tech.nimbbl.coreapisdk.api.models.responses.UpdateTransactionResponse
-import tech.nimbbl.coreapisdk.api.models.responses.transaction_enquiry.TransactionEnquiryResponseVo
+import org.json.JSONObject
+import tech.nimbbl.coreapisdk.api.HttpConnectionHelper
+import tech.nimbbl.coreapisdk.api.HttpConnectionHelper.HttpResponse
+import tech.nimbbl.coreapisdk.api.RawApiResponse
 import tech.nimbbl.coreapisdk.core.constants.PayloadKeys.Companion.key_fingerPrint
 import tech.nimbbl.coreapisdk.core.constants.PayloadKeys.Companion.key_ipAddress
 import tech.nimbbl.coreapisdk.core.constants.PayloadKeys.Companion.key_userAgent
-import tech.nimbbl.coreapisdk.core.constants.ServiceConstants.Companion.BASE_URL
-import tech.nimbbl.coreapisdk.data.models.common.CheckoutResourceVo
-import tech.nimbbl.coreapisdk.data.models.common.InitiatePaymentResponse
-import tech.nimbbl.coreapisdk.data.models.common.PublicKeyResponse
-import tech.nimbbl.coreapisdk.data.models.common.ResendOtpResponse
-import tech.nimbbl.coreapisdk.data.models.common.ResolveUserResponse
-import tech.nimbbl.coreapisdk.data.models.payment.BinDataResponse
-import tech.nimbbl.coreapisdk.data.models.payment.ListOfBankResponse
-import tech.nimbbl.coreapisdk.data.models.payment.ListOfWalletResponse
-import tech.nimbbl.coreapisdk.data.models.payment.PaymentModesResponse
-import tech.nimbbl.coreapisdk.utils.extensions.printLog
-import java.util.concurrent.TimeUnit
 
-
-interface CoreAppWebService {
-
-    @POST
-    suspend fun cancelCheckout(
-        @Url url: String,
-        @Header("Authorization") auth: String,
-        @Body body: RequestBody
-    ): Response<Void>
-
-
-    @PATCH
-    suspend fun updateOrder(
-        @Url url: String,
-        @Header("Authorization") auth: String,
-        @Body body: RequestBody
-    ): Response<OrderResponse>
-
-    @GET
-    suspend fun checkOutResource(
-        @Url url: String,
-        @Header("x-nimbbl-key") nimbblKey: String,
-        @Header("Authorization") auth: String,
-    ): Response<CheckoutResourceVo>
-
-
-    @GET
-    suspend fun downloadBankLogo(@Url fileUrl: String): Response<ResponseBody>
-
-    @GET
-    suspend fun getOrderDetails(
-        @Url url: String,
-        @Header("Authorization") auth: String
-    ): Response<OrderResponse>
-
-    @POST
-    suspend fun resolveUser(
-        @Url url: String,
-        @Header("x-nimbbl-key") nimbblKey: String,
-        @Header("Authorization") auth: String,
-        @Body inputPayload: RequestBody
-    ): Response<ResolveUserResponse>
-
-    @POST
-    suspend fun verifyUser(
-        @Url url: String,
-        @Header("x-nimbbl-key") nimbblKey: String,
-        @Header("Authorization") auth: String,
-        @Body inputPayload: RequestBody
-    ): Response<ResolveUserResponse>
-
-    @POST
-    suspend fun getPaymentModes(
-        @Url url: String,
-        @Header("x-nimbbl-key") nimbblKey: String,
-        @Header("Authorization") auth: String,
-        @Header("x-nimbbl-user-token") nimbblUserToken: String,
-        @Body inputPayload: RequestBody
-    ): Response<PaymentModesResponse>
-
-    @POST
-    suspend fun getListOfBanks(
-        @Url url: String,
-        @Header("x-nimbbl-key") nimbblKey: String,
-        @Header("Authorization") auth: String,
-        @Body inputPayload: RequestBody
-    ): Response<ListOfBankResponse>
-
-    @POST
-    suspend fun getListOfWallets(
-        @Url url: String,
-        @Header("x-nimbbl-key") nimbblKey: String,
-        @Header("Authorization") auth: String,
-        @Body inputPayload: RequestBody
-    ): Response<ListOfWalletResponse>
-
-    @POST
-    suspend fun initiatePayment(
-        @Url url: String,
-        @Header("x-nimbbl-key") nimbblKey: String,
-        @Header("Authorization") auth: String,
-        @Header("x-nimbbl-user-token") nimbblUserToken: String,
-        @Body inputPayload: RequestBody
-    ): Response<InitiatePaymentResponse>
-
-    @POST
-    suspend fun makePayment(
-        @Url url: String,
-        @Header("x-nimbbl-key") nimbblKey: String,
-        @Header("Authorization") auth: String,
-        @Header("x-nimbbl-user-token") nimbblUserToken: String,
-        @Body inputPayload: RequestBody
-    ): Response<InitiatePaymentResponse>
-
-    @POST
-    suspend fun getTransactionEnquiry(
-        @Url url: String,
-        @Header("Authorization") auth: String,
-        @Body inputPayload: RequestBody
-    ): Response<TransactionEnquiryResponseVo>
-
-    @POST
-    suspend fun getBinData(
-        @Url url: String,
-        @Header("x-nimbbl-key") nimbblKey: String,
-        @Header("Authorization") auth: String,
-        @Body inputPayload: RequestBody
-    ): Response<BinDataResponse>
-
-    @GET
-    suspend fun getPublicKey(
-        @Url url: String
-    ): Response<PublicKeyResponse>
-
-    @POST
-    suspend fun resendOtp(
-        @Url url: String,
-        @Header("x-nimbbl-key") nimbblKey: String,
-        @Header("Authorization") auth: String,
-        @Body inputPayload: RequestBody
-    ): Response<ResendOtpResponse>
-
-    @PUT
-    suspend fun updateTransaction(
-        @Url url: String,
-        @Header("Authorization") auth: String,
-        @Body inputPayload: RequestBody
-    ): Response<UpdateTransactionResponse>
-
-
-
+/**
+ * Core API Web Service using java.net.HttpURLConnection (no OkHttp dependency).
+ */
+class CoreAppWebService private constructor(
+    private val defaultHeaders: Map<String, String>
+) {
 
     companion object {
-        // private const val BASE_URL = "https://uatshop.nimbbl.tech/api/"
-        private var retrofit: Retrofit? = null
+        private const val TAG = "CoreAppWebService"
+
+        // HTTP Header Keys
+        private const val HEADER_AUTHORIZATION = "Authorization"
+        private const val HEADER_NIMBBL_KEY = "x-nimbbl-key"
+        private const val HEADER_NIMBBL_USER_TOKEN = "x-nimbbl-user-token"
 
         operator fun invoke(
             baseUrl: String,
@@ -181,56 +30,320 @@ interface CoreAppWebService {
             md5: String,
             ipAddress: String
         ): CoreAppWebService? {
-            val logging = HttpLoggingInterceptor()
-            // Set logging level based on debug mode
-            if (is_debug_enabled) {
-                logging.setLevel(HttpLoggingInterceptor.Level.BODY)
-            } else {
-                logging.setLevel(HttpLoggingInterceptor.Level.NONE)
-            }
-            
-            // Centralized API logging interceptor
-            val apiLoggingInterceptor = Interceptor { chain ->
-                val request = chain.request()
-                ApiLoggingUtils.logRequest(request, "CoreAppWebService")
-                
-                val response = chain.proceed(request)
-                ApiLoggingUtils.logResponse(response, "CoreAppWebService")
-                
-                response
-            }
-            
-            val okHttpClient = OkHttpClient.Builder()
-                .addInterceptor(logging)
-                .addInterceptor(apiLoggingInterceptor)
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .addInterceptor(Interceptor { chain ->
-                    val request: Request =
-                        chain.request().newBuilder()
-                            .addHeader(key_userAgent, userAgent)
-                            .addHeader(key_ipAddress, ipAddress)
-                            .addHeader(key_fingerPrint, md5)
-                            .build()
-                    chain.proceed(request)
-                })
-                .build()
-            val gson = GsonBuilder()
-                .setLenient()
-                .create()
-
-            retrofit = Retrofit.Builder()
-                .baseUrl(baseUrl)
-                .client(okHttpClient)
-                .addConverterFactory(GsonConverterFactory.create(gson))
-                .build()
-            printLog("SAN", BASE_URL)
-
-            return retrofit?.create(CoreAppWebService::class.java) ?: run {
-                Log.e("CoreAppWebService", "Retrofit is null, cannot create service")
+            return try {
+                val headers = mapOf(
+                    key_userAgent to userAgent,
+                    key_ipAddress to ipAddress,
+                    key_fingerPrint to md5
+                )
+                CoreAppWebService(headers)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error creating CoreAppWebService: ${e.message}", e)
                 null
             }
+        }
+    }
+
+    private fun allHeaders(extra: Map<String, String>): Map<String, String> =
+        defaultHeaders + extra
+
+    private fun parseResponse(http: HttpResponse): RawApiResponse {
+        val body = http.body
+        val code = http.code
+        val message = http.message
+        val jsonBody = if (http.isSuccessful && !body.isNullOrEmpty()) {
+            try {
+                JSONObject(body)
+            } catch (e: Exception) {
+                JSONObject().apply { put("raw", body) }
+            }
+        } else {
+            JSONObject().apply {
+                put("success", false)
+                put("status", code)
+                put("error", body ?: "Unknown error")
+            }
+        }
+        return RawApiResponse(code = code, message = message, body = jsonBody, rawBodyString = body)
+    }
+
+    suspend fun cancelCheckout(url: String, auth: String, body: String): RawApiResponse {
+        return try {
+            val http = HttpConnectionHelper.post(url, allHeaders(mapOf(HEADER_AUTHORIZATION to auth)), body)
+            parseResponse(http)
+        } catch (e: Exception) {
+            Log.e(TAG, "cancelCheckout error: ${e.message}", e)
+            RawApiResponse(code = -1, message = e.message ?: "Unknown error", body = null)
+        }
+    }
+
+    suspend fun updateOrder(url: String, auth: String, body: String): RawApiResponse {
+        return try {
+            val http = HttpConnectionHelper.patch(url, allHeaders(mapOf(HEADER_AUTHORIZATION to auth)), body)
+            parseResponse(http)
+        } catch (e: Exception) {
+            Log.e(TAG, "updateOrder error: ${e.message}", e)
+            RawApiResponse(code = -1, message = e.message ?: "Unknown error", body = null)
+        }
+    }
+
+    suspend fun checkOutResource(url: String, nimbblKey: String, auth: String): RawApiResponse {
+        return try {
+            val http = HttpConnectionHelper.get(
+                url,
+                allHeaders(mapOf(HEADER_NIMBBL_KEY to nimbblKey, HEADER_AUTHORIZATION to auth))
+            )
+            parseResponse(http)
+        } catch (e: Exception) {
+            Log.e(TAG, "checkOutResource error: ${e.message}", e)
+            RawApiResponse(code = -1, message = e.message ?: "Unknown error", body = null)
+        }
+    }
+
+    suspend fun downloadBankLogo(fileUrl: String): ByteArray? {
+        return try {
+            HttpConnectionHelper.downloadBytes(fileUrl, defaultHeaders)
+        } catch (e: Exception) {
+            Log.e(TAG, "downloadBankLogo error: ${e.message}", e)
+            null
+        }
+    }
+
+    suspend fun getOrderDetails(url: String, auth: String): RawApiResponse {
+        return try {
+            val http = HttpConnectionHelper.get(url, allHeaders(mapOf(HEADER_AUTHORIZATION to auth)))
+            parseResponse(http)
+        } catch (e: Exception) {
+            Log.e(TAG, "getOrderDetails error: ${e.message}", e)
+            RawApiResponse(code = -1, message = e.message ?: "Unknown error", body = null)
+        }
+    }
+
+    suspend fun resolveUser(
+        url: String,
+        nimbblKey: String,
+        auth: String,
+        inputPayload: String
+    ): RawApiResponse {
+        return try {
+            val http = HttpConnectionHelper.post(
+                url,
+                allHeaders(mapOf(HEADER_NIMBBL_KEY to nimbblKey, HEADER_AUTHORIZATION to auth)),
+                inputPayload
+            )
+            parseResponse(http)
+        } catch (e: Exception) {
+            Log.e(TAG, "resolveUser error: ${e.message}", e)
+            RawApiResponse(code = -1, message = e.message ?: "Unknown error", body = null)
+        }
+    }
+
+    suspend fun verifyUser(
+        url: String,
+        nimbblKey: String,
+        auth: String,
+        inputPayload: String
+    ): RawApiResponse {
+        return try {
+            val http = HttpConnectionHelper.post(
+                url,
+                allHeaders(mapOf(HEADER_NIMBBL_KEY to nimbblKey, HEADER_AUTHORIZATION to auth)),
+                inputPayload
+            )
+            parseResponse(http)
+        } catch (e: Exception) {
+            Log.e(TAG, "verifyUser error: ${e.message}", e)
+            RawApiResponse(code = -1, message = e.message ?: "Unknown error", body = null)
+        }
+    }
+
+    suspend fun getPaymentModes(
+        url: String,
+        nimbblKey: String,
+        auth: String,
+        nimbblUserToken: String,
+        inputPayload: String
+    ): RawApiResponse {
+        return try {
+            val http = HttpConnectionHelper.post(
+                url,
+                allHeaders(mapOf(
+                    HEADER_NIMBBL_KEY to nimbblKey,
+                    HEADER_AUTHORIZATION to auth,
+                    HEADER_NIMBBL_USER_TOKEN to nimbblUserToken
+                )),
+                inputPayload
+            )
+            parseResponse(http)
+        } catch (e: Exception) {
+            Log.e(TAG, "getPaymentModes error: ${e.message}", e)
+            RawApiResponse(code = -1, message = e.message ?: "Unknown error", body = null)
+        }
+    }
+
+    suspend fun getListOfBanks(
+        url: String,
+        nimbblKey: String,
+        auth: String,
+        inputPayload: String
+    ): RawApiResponse {
+        return try {
+            val http = HttpConnectionHelper.post(
+                url,
+                allHeaders(mapOf(HEADER_NIMBBL_KEY to nimbblKey, HEADER_AUTHORIZATION to auth)),
+                inputPayload
+            )
+            parseResponse(http)
+        } catch (e: Exception) {
+            Log.e(TAG, "getListOfBanks error: ${e.message}", e)
+            RawApiResponse(code = -1, message = e.message ?: "Unknown error", body = null)
+        }
+    }
+
+    suspend fun getListOfWallets(
+        url: String,
+        nimbblKey: String,
+        auth: String,
+        inputPayload: String
+    ): RawApiResponse {
+        return try {
+            val http = HttpConnectionHelper.post(
+                url,
+                allHeaders(mapOf(HEADER_NIMBBL_KEY to nimbblKey, HEADER_AUTHORIZATION to auth)),
+                inputPayload
+            )
+            parseResponse(http)
+        } catch (e: Exception) {
+            Log.e(TAG, "getListOfWallets error: ${e.message}", e)
+            RawApiResponse(code = -1, message = e.message ?: "Unknown error", body = null)
+        }
+    }
+
+    suspend fun initiatePayment(
+        url: String,
+        nimbblKey: String,
+        auth: String,
+        nimbblUserToken: String,
+        inputPayload: String
+    ): RawApiResponse {
+        return try {
+            val http = HttpConnectionHelper.post(
+                url,
+                allHeaders(mapOf(
+                    HEADER_NIMBBL_KEY to nimbblKey,
+                    HEADER_AUTHORIZATION to auth,
+                    HEADER_NIMBBL_USER_TOKEN to nimbblUserToken
+                )),
+                inputPayload
+            )
+            parseResponse(http)
+        } catch (e: Exception) {
+            Log.e(TAG, "initiatePayment error: ${e.message}", e)
+            RawApiResponse(code = -1, message = e.message ?: "Unknown error", body = null)
+        }
+    }
+
+    suspend fun makePayment(
+        url: String,
+        nimbblKey: String,
+        auth: String,
+        nimbblUserToken: String,
+        inputPayload: String
+    ): RawApiResponse {
+        return try {
+            val http = HttpConnectionHelper.post(
+                url,
+                allHeaders(mapOf(
+                    HEADER_NIMBBL_KEY to nimbblKey,
+                    HEADER_AUTHORIZATION to auth,
+                    HEADER_NIMBBL_USER_TOKEN to nimbblUserToken
+                )),
+                inputPayload
+            )
+            parseResponse(http)
+        } catch (e: Exception) {
+            Log.e(TAG, "makePayment error: ${e.message}", e)
+            RawApiResponse(code = -1, message = e.message ?: "Unknown error", body = null)
+        }
+    }
+
+    suspend fun getTransactionEnquiry(
+        url: String,
+        auth: String,
+        inputPayload: String
+    ): RawApiResponse {
+        return try {
+            val http = HttpConnectionHelper.post(
+                url,
+                allHeaders(mapOf(HEADER_AUTHORIZATION to auth)),
+                inputPayload
+            )
+            parseResponse(http)
+        } catch (e: Exception) {
+            Log.e(TAG, "getTransactionEnquiry error: ${e.message}", e)
+            RawApiResponse(code = -1, message = e.message ?: "Unknown error", body = null)
+        }
+    }
+
+    suspend fun getBinData(
+        url: String,
+        nimbblKey: String,
+        auth: String,
+        inputPayload: String
+    ): RawApiResponse {
+        return try {
+            val http = HttpConnectionHelper.post(
+                url,
+                allHeaders(mapOf(HEADER_NIMBBL_KEY to nimbblKey, HEADER_AUTHORIZATION to auth)),
+                inputPayload
+            )
+            parseResponse(http)
+        } catch (e: Exception) {
+            Log.e(TAG, "getBinData error: ${e.message}", e)
+            RawApiResponse(code = -1, message = e.message ?: "Unknown error", body = null)
+        }
+    }
+
+    suspend fun getPublicKey(url: String): RawApiResponse {
+        return try {
+            val http = HttpConnectionHelper.get(url)
+            parseResponse(http)
+        } catch (e: Exception) {
+            Log.e(TAG, "getPublicKey error: ${e.message}", e)
+            RawApiResponse(code = -1, message = e.message ?: "Unknown error", body = null)
+        }
+    }
+
+    suspend fun resendOtp(
+        url: String,
+        nimbblKey: String,
+        auth: String,
+        inputPayload: String
+    ): RawApiResponse {
+        return try {
+            val http = HttpConnectionHelper.post(
+                url,
+                allHeaders(mapOf(HEADER_NIMBBL_KEY to nimbblKey, HEADER_AUTHORIZATION to auth)),
+                inputPayload
+            )
+            parseResponse(http)
+        } catch (e: Exception) {
+            Log.e(TAG, "resendOtp error: ${e.message}", e)
+            RawApiResponse(code = -1, message = e.message ?: "Unknown error", body = null)
+        }
+    }
+
+    suspend fun updateTransaction(url: String, auth: String, inputPayload: String): RawApiResponse {
+        return try {
+            val http = HttpConnectionHelper.put(
+                url,
+                allHeaders(mapOf(HEADER_AUTHORIZATION to auth)),
+                inputPayload
+            )
+            parseResponse(http)
+        } catch (e: Exception) {
+            Log.e(TAG, "updateTransaction error: ${e.message}", e)
+            RawApiResponse(code = -1, message = e.message ?: "Unknown error", body = null)
         }
     }
 }

@@ -6,11 +6,13 @@
 # ===========================================
 # JWT Token Parsing (Critical)
 # ===========================================
-# JWT Library
+# Auth0 JWT library
 -keep class com.auth0.android.jwt.** { *; }
 -keep class com.auth0.jwt.** { *; }
 
-# Gson TypeToken for JWT parsing
+# Auth0 uses Gson TypeToken internally; keep generic signatures to avoid:
+# java.lang.RuntimeException: Missing type parameter.
+-keepattributes Signature
 -keep class com.google.gson.reflect.TypeToken { *; }
 -keep class * extends com.google.gson.reflect.TypeToken
 -keepclassmembers class * extends com.google.gson.reflect.TypeToken {
@@ -28,34 +30,32 @@
 # ===========================================
 # Keep public SDK classes
 -keep public class tech.nimbbl.coreapisdk.core.NimbblCoreApiSDK { *; }
--keep public class tech.nimbbl.coreapisdk.utils.payloads.OrderCreationPayload { *; }
--keep public class tech.nimbbl.coreapisdk.api.models.requests.CreateOrderRequest { *; }
--keep public class tech.nimbbl.coreapisdk.api.models.responses.CreateOrderResponse { *; }
 
 # Keep constants classes used by other SDKs
 -keep class tech.nimbbl.coreapisdk.core.constants.EventConstants { *; }
 -keep class tech.nimbbl.coreapisdk.core.constants.PayloadKeys { *; }
+-keep class tech.nimbbl.coreapisdk.core.constants.ServiceConstants { *; }
+-keep class tech.nimbbl.coreapisdk.core.constants.ServiceConstants$Companion { *; }
+
+# RestApiUtils - used by WebView SDK for URL configuration
+-keep class tech.nimbbl.coreapisdk.api.RestApiUtils { *; }
+
+# ApiResult - public API; keep so consumers (e.g. WebView SDK) can use .code, .rawBody, .isSuccessful
+-keep class tech.nimbbl.coreapisdk.api.ApiResult { *; }
 
 # ===========================================
-# JSON Serialization (Essential)
+# JSON / Model classes (Essential)
 # ===========================================
-# Keep model classes for JSON serialization - CRITICAL for Gson
-# Keep classes, constructors, fields, and methods
+# Keep model classes used by JsonParser (org.json)
 -keep class tech.nimbbl.coreapisdk.api.models.** {
     <fields>;
     <init>(...);
     <methods>;
 }
-
 -keep class tech.nimbbl.coreapisdk.data.models.** {
     <fields>;
     <init>(...);
     <methods>;
-}
-
-# Keep JSON annotations
--keepclassmembers class * {
-    @com.google.gson.annotations.SerializedName <fields>;
 }
 
 # ===========================================
@@ -69,8 +69,6 @@
 # ===========================================
 # Suppress Warnings
 # ===========================================
--dontwarn com.google.gson.**
--dontwarn com.google.gson.reflect.**
 -dontwarn kotlin.reflect.**
 -dontwarn kotlin.Unit
 -dontwarn kotlin.jvm.internal.**

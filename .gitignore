@@ -2,3 +2,12 @@
 /.gradle/
 /.idea/
 /.gradle/
+
+# Local secrets - never commit
+.env
+gradle.properties
+
+# Local/dev-only files
+.DS_Store
+PUBLISHING.md
+signing-key.gpg
