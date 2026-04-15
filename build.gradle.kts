@@ -171,7 +171,13 @@ afterEvaluate {
         repositories {
             maven {
                 name = "sonatype"
-                url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
+                val isSnapshot = PUBLISH_VERSION.endsWith("-SNAPSHOT")
+                url = uri(
+                    if (isSnapshot)
+                        "https://central.sonatype.com/repository/maven-snapshots/"
+                    else
+                        "https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/"
+                )
                 credentials {
                     username = project.findProperty("centralPortalUsername") as String?
                         ?: System.getenv("CENTRAL_PORTAL_USERNAME")
