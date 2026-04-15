@@ -38,25 +38,29 @@ pipeline {
     stage('Set SDK version (optional)') {
       when { expression { return params.SDK_VERSION?.trim() } }
       steps {
-        sh '''
-          set -euxo pipefail
-          v="${SDK_VERSION}"
-          file="version.properties"
-          test -f "$file"
-          perl -i -pe 's/^SDK_VERSION=.*/SDK_VERSION='"$v"'/' "$file"
-          echo "SDK_VERSION now:"
-          grep '^SDK_VERSION=' "$file"
-        '''
+        script {
+          def v = params.SDK_VERSION.trim()
+          sh """
+            set -euxo pipefail
+            file="version.properties"
+            test -f "\$file"
+            perl -i -pe 's/^SDK_VERSION=.*/SDK_VERSION=${v}/' "\$file"
+            echo "SDK_VERSION now:"
+            grep '^SDK_VERSION=' "\$file"
+          """
+        }
       }
     }
 
     stage('Build') {
       steps {
-        sh '''
-          set -euxo pipefail
-          VARIANT_CAP=$(echo "${BUILD_VARIANT}" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
-          ./gradlew clean "assemble${VARIANT_CAP}" --stacktrace
-        '''
+        script {
+          def variantCap = params.BUILD_VARIANT.substring(0, 1).toUpperCase() + params.BUILD_VARIANT.substring(1)
+          sh """
+            set -euxo pipefail
+            ./gradlew clean assemble${variantCap} --stacktrace
+          """
+        }
       }
     }
 
