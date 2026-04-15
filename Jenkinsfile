@@ -2,8 +2,6 @@ pipeline {
   agent any
 
   options {
-    // Use wrap() instead of ansiColor() option to avoid plugin/version mismatch
-    wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm'])
     timestamps()
     disableConcurrentBuilds()
     buildDiscarder(logRotator(numToKeepStr: '30'))
