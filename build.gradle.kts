@@ -71,6 +71,8 @@ android {
     buildTypes {
         debug {
             // Debug build uses gradle.properties values
+            enableUnitTestCoverage = true
+            enableAndroidTestCoverage = true
         }
         
         release {
@@ -120,12 +122,25 @@ dependencies {
     testImplementation("junit:junit:$junitVersion")
     androidTestImplementation("androidx.test.ext:junit:$junitExtVersion")
     androidTestImplementation("androidx.test.espresso:espresso-core:$espressoVersion")
+
+    // Mocking the HTTP layer (CoreAppWebService/HttpConnectionHelper) for repository/service tests.
+    // These run as instrumented tests (JsonParser needs real org.json, unavailable in plain JVM
+    // tests here), so this uses mockito-android (dexmaker-backed), not mockito-core — plain
+    // mockito-core's inline mock maker relies on JVM-only agent/Byte Buddy mechanics that don't
+    // work on Android's ART runtime.
+    androidTestImplementation("org.mockito:mockito-android:5.12.0")
+    androidTestImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion")
 }
 
 // Maven Central coordinates (tech.nimbbl namespace)
 val PUBLISH_GROUP_ID = "tech.nimbbl"
 val PUBLISH_ARTIFACT_ID_CORE = "core-api-sdk"
-val PUBLISH_VERSION = versionProperties.getProperty("SDK_VERSION", "1.0.0")
+// publishVersionOverride lets publish_to_maven_central.sh publish a "-SNAPSHOT" version for a
+// real-network rehearsal without touching version.properties (which has no snapshot support —
+// version_manager.sh only accepts strict MAJOR.MINOR.PATCH). Unset in normal/default builds.
+val PUBLISH_VERSION = (project.findProperty("publishVersionOverride") as String?)
+    ?: versionProperties.getProperty("SDK_VERSION", "1.0.0")
 
 group = PUBLISH_GROUP_ID
 version = PUBLISH_VERSION

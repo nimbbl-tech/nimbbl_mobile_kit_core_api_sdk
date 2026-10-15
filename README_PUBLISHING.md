@@ -2,6 +2,8 @@
 
 This guide covers how to bump the SDK version and publish builds (snapshot and stable) to JitPack using the scripts in this repo.
 
+**Publishing to Maven Central instead?** See [MAVEN_CENTRAL_DEPLOYMENT.md](MAVEN_CENTRAL_DEPLOYMENT.md) — a separate, independent target with its own script (`publish_to_maven_central.sh`).
+
 ### Prerequisites
 - Git clean working tree on the `master` branch (the publish script enforces this).
 - `version.properties` present and up to date.

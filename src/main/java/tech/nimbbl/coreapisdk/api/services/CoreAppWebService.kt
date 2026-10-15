@@ -12,7 +12,7 @@ import tech.nimbbl.coreapisdk.core.constants.PayloadKeys.Companion.key_userAgent
 /**
  * Core API Web Service using java.net.HttpURLConnection (no OkHttp dependency).
  */
-class CoreAppWebService private constructor(
+open class CoreAppWebService private constructor(
     private val defaultHeaders: Map<String, String>
 ) {
 
@@ -67,7 +67,7 @@ class CoreAppWebService private constructor(
         return RawApiResponse(code = code, message = message, body = jsonBody, rawBodyString = body)
     }
 
-    suspend fun cancelCheckout(url: String, auth: String, body: String): RawApiResponse {
+    open suspend fun cancelCheckout(url: String, auth: String, body: String): RawApiResponse {
         return try {
             val http = HttpConnectionHelper.post(url, allHeaders(mapOf(HEADER_AUTHORIZATION to auth)), body)
             parseResponse(http)
@@ -77,7 +77,7 @@ class CoreAppWebService private constructor(
         }
     }
 
-    suspend fun updateOrder(url: String, auth: String, body: String): RawApiResponse {
+    open suspend fun updateOrder(url: String, auth: String, body: String): RawApiResponse {
         return try {
             val http = HttpConnectionHelper.patch(url, allHeaders(mapOf(HEADER_AUTHORIZATION to auth)), body)
             parseResponse(http)
@@ -87,7 +87,7 @@ class CoreAppWebService private constructor(
         }
     }
 
-    suspend fun checkOutResource(url: String, nimbblKey: String, auth: String): RawApiResponse {
+    open suspend fun checkOutResource(url: String, nimbblKey: String, auth: String): RawApiResponse {
         return try {
             val http = HttpConnectionHelper.get(
                 url,
@@ -100,7 +100,7 @@ class CoreAppWebService private constructor(
         }
     }
 
-    suspend fun downloadBankLogo(fileUrl: String): ByteArray? {
+    open suspend fun downloadBankLogo(fileUrl: String): ByteArray? {
         return try {
             HttpConnectionHelper.downloadBytes(fileUrl, defaultHeaders)
         } catch (e: Exception) {
@@ -109,7 +109,7 @@ class CoreAppWebService private constructor(
         }
     }
 
-    suspend fun getOrderDetails(url: String, auth: String): RawApiResponse {
+    open suspend fun getOrderDetails(url: String, auth: String): RawApiResponse {
         return try {
             val http = HttpConnectionHelper.get(url, allHeaders(mapOf(HEADER_AUTHORIZATION to auth)))
             parseResponse(http)
@@ -119,7 +119,7 @@ class CoreAppWebService private constructor(
         }
     }
 
-    suspend fun resolveUser(
+    open suspend fun resolveUser(
         url: String,
         nimbblKey: String,
         auth: String,
@@ -138,7 +138,7 @@ class CoreAppWebService private constructor(
         }
     }
 
-    suspend fun verifyUser(
+    open suspend fun verifyUser(
         url: String,
         nimbblKey: String,
         auth: String,
@@ -157,7 +157,7 @@ class CoreAppWebService private constructor(
         }
     }
 
-    suspend fun getPaymentModes(
+    open suspend fun getPaymentModes(
         url: String,
         nimbblKey: String,
         auth: String,
@@ -181,7 +181,7 @@ class CoreAppWebService private constructor(
         }
     }
 
-    suspend fun getListOfBanks(
+    open suspend fun getListOfBanks(
         url: String,
         nimbblKey: String,
         auth: String,
@@ -200,7 +200,7 @@ class CoreAppWebService private constructor(
         }
     }
 
-    suspend fun getListOfWallets(
+    open suspend fun getListOfWallets(
         url: String,
         nimbblKey: String,
         auth: String,
@@ -219,7 +219,7 @@ class CoreAppWebService private constructor(
         }
     }
 
-    suspend fun initiatePayment(
+    open suspend fun initiatePayment(
         url: String,
         nimbblKey: String,
         auth: String,
@@ -243,7 +243,7 @@ class CoreAppWebService private constructor(
         }
     }
 
-    suspend fun makePayment(
+    open suspend fun makePayment(
         url: String,
         nimbblKey: String,
         auth: String,
@@ -267,7 +267,7 @@ class CoreAppWebService private constructor(
         }
     }
 
-    suspend fun getTransactionEnquiry(
+    open suspend fun getTransactionEnquiry(
         url: String,
         auth: String,
         inputPayload: String
@@ -285,7 +285,7 @@ class CoreAppWebService private constructor(
         }
     }
 
-    suspend fun getBinData(
+    open suspend fun getBinData(
         url: String,
         nimbblKey: String,
         auth: String,
@@ -304,7 +304,7 @@ class CoreAppWebService private constructor(
         }
     }
 
-    suspend fun getPublicKey(url: String): RawApiResponse {
+    open suspend fun getPublicKey(url: String): RawApiResponse {
         return try {
             val http = HttpConnectionHelper.get(url)
             parseResponse(http)
@@ -314,7 +314,7 @@ class CoreAppWebService private constructor(
         }
     }
 
-    suspend fun resendOtp(
+    open suspend fun resendOtp(
         url: String,
         nimbblKey: String,
         auth: String,
@@ -333,7 +333,7 @@ class CoreAppWebService private constructor(
         }
     }
 
-    suspend fun updateTransaction(url: String, auth: String, inputPayload: String): RawApiResponse {
+    open suspend fun updateTransaction(url: String, auth: String, inputPayload: String): RawApiResponse {
         return try {
             val http = HttpConnectionHelper.put(
                 url,

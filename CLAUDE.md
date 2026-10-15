@@ -23,16 +23,20 @@ Android library (AAR) — the **Nimbbl Core API SDK**. It handles payment API ca
 ./gradlew connectedAndroidTest       # instrumented tests (requires device/emulator)
 
 # Single test class
-./gradlew test --tests "tech.nimbbl.coreapisdk.ExampleUnitTest"
+./gradlew test --tests "tech.nimbbl.coreapisdk.utils.DataMaskerTest"
+```
 
+See [TESTING.md](TESTING.md) for the full guide, including why `JsonParser` tests must be
+instrumented (real `org.json`, no Robolectric in this project).
+
+```bash
 # Lint
 ./gradlew lint
-
-# Publish to Sonatype (snapshots or staging, based on version suffix)
-./gradlew publishReleasePublicationToSonatypeRepository \
-  -PossrhTokenUsername=... -PossrhTokenSecret=... \
-  -Psigning.keyId=... -Psigning.password=... -Psigning.secretKeyRingFile=...
 ```
+
+See [MAVEN_CENTRAL_DEPLOYMENT.md](MAVEN_CENTRAL_DEPLOYMENT.md) for the full Maven Central publish
+guide — credentials/signing setup, and `publish_to_maven_central.sh` usage (`--dry-run`,
+`--release-type release|snapshot`, `--bump patch|minor|major`, `--tests none|unit|all`).
 
 ### Version management
 
@@ -52,7 +56,10 @@ Version is read from `version.properties` (`SDK_VERSION`). `build.gradle.kts` in
 ./publish_to_jitpack.sh --current    # stable tag from current version.properties
 ```
 
-Requires `GITHUB_USERNAME=nimbbl-tech` and `REPO_NAME=nimbbl_mobile_kit_core_api_sdk` exported. For Sonatype: append `-SNAPSHOT` to `SDK_VERSION` for snapshot repo; omit for staging.
+Requires `GITHUB_USERNAME=nimbbl-tech` and `REPO_NAME=nimbbl_mobile_kit_core_api_sdk` exported.
+(For Maven Central's snapshot-vs-release distinction, use `publish_to_maven_central.sh
+--release-type snapshot|release` instead of manually editing `SDK_VERSION` — see
+[MAVEN_CENTRAL_DEPLOYMENT.md](MAVEN_CENTRAL_DEPLOYMENT.md).)
 
 ## Architecture
 
@@ -98,7 +105,7 @@ When adding a new API call: call `CoreAppWebService`, get back `RawApiResponse`,
 
 ### Event logging
 
-`EventLoggingService` is a second singleton (independent of the main SDK singleton). It uses a `SupervisorJob` on `Dispatchers.IO` so analytics failures never affect payment flows. All tokens in logs are masked by `DataMasker` (shows first 5 + last 7 chars).
+`EventLoggingService` is a second singleton (independent of the main SDK singleton). It uses a `SupervisorJob` on `Dispatchers.IO` so analytics failures never affect payment flows. `DataMasker.sanitizeForLogging` masks request/response bodies logged by `ApiLoggingUtils`: auth tokens (shows first 5 + last 7 chars) and user PII — `email`, `mobile_number`/`mobile`/`phone`, `otp`, and name/address fields (`first_name`, `last_name`, `address_1`, `city`, `pincode`, etc.) — see `DataMaskerTest`.
 
 ### ProGuard
 
@@ -122,4 +129,3 @@ signing.secretKeyRingFile=...
 
 `build.gradle.kts` resolves publish credentials with this fallback order (first non-null wins):
 `centralPortalUsername` → `CENTRAL_PORTAL_USERNAME` (env) → `ossrhTokenUsername` → `OSSRH_TOKEN_USERNAME` (env).
-The Jenkinsfile passes `-PossrhTokenUsername` / `-PossrhTokenSecret`, which resolves at the third slot.

@@ -9,6 +9,7 @@ import android.content.Context
 import android.os.Build
 import android.telephony.TelephonyManager
 import android.util.Log
+import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -46,6 +47,15 @@ class EventLoggingService private constructor() {
         // Event logging control flags
         @Volatile
         private var isEventLoggingEnabled: Boolean = true  // Always enabled by default
+
+        /**
+         * Overrides the event-log endpoint, bypassing Constants.EVENT_LOG_URL's environment
+         * detection. Production code never sets this; it exists so tests can point sendEventToServer
+         * at a local server instead of the real eventlogpipe.nimbbl.tech endpoints.
+         */
+        @Volatile
+        @VisibleForTesting
+        var eventLogUrlOverride: String? = null
         
         fun getInstance(): EventLoggingService {
             return INSTANCE ?: synchronized(this) {
@@ -305,7 +315,7 @@ class EventLoggingService private constructor() {
 
     private fun sendEventToServer(eventData: JSONObject) {
         try {
-            val url = "${Constants.EVENT_LOG_URL}?tenantId=${Constants.DEFAULT_TENANT_ID}"
+            val url = "${eventLogUrlOverride ?: Constants.EVENT_LOG_URL}?tenantId=${Constants.DEFAULT_TENANT_ID}"
             val requestBodyJson = eventData.toString()
             val headers = mapOf("Content-Type" to "application/json")
             val response = HttpConnectionHelper.post(url, headers, requestBodyJson)
