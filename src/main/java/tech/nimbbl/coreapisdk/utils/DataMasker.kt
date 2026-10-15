@@ -5,26 +5,42 @@ import tech.nimbbl.coreapisdk.core.constants.Constants.is_debug_enabled
 
 /**
  * Data masking utility for the Nimbbl Android Core API SDK
- * Provides secure data masking for logging, analytics, and debugging
- * Currently focused on token masking, can be extended for other data types in the future
+ * Provides secure data masking for logging, analytics, and debugging:
+ * auth tokens and user PII (email, phone, OTP, name, address).
  */
 object DataMasker {
-    
+
     // MARK: - Constants
-    
+
     /// Masking character used to hide sensitive parts
     private const val MASKING_CHARACTER = "*"
-    
+
     /// Minimum token length to apply masking
     private const val MINIMUM_TOKEN_LENGTH = 12
-    
+
     /// Number of characters to show at the beginning of token
     private const val TOKEN_PREFIX_LENGTH = 5
-    
+
     /// Number of characters to show at the end of token
     private const val TOKEN_SUFFIX_LENGTH = 7
-    
+
     private const val TAG = "DataMasker"
+
+    /// JSON keys never shown, even partially (e.g. OTP codes)
+    private val FULLY_MASKED_KEYS = setOf("otp")
+
+    /// JSON keys masked keeping only the first letter of the local part + domain
+    private val EMAIL_KEYS = setOf("email")
+
+    /// JSON keys masked keeping only the last 2 digits (phone numbers)
+    private val PHONE_KEYS = setOf("mobile_number", "mobile", "phone", "phone_number")
+
+    /// JSON keys masked keeping only the first character (names, free-text address fields)
+    private val NAME_AND_ADDRESS_KEYS = setOf(
+        "first_name", "last_name", "name", "displayName", "user_name",
+        "address_1", "address_id", "address_type", "area", "city",
+        "landmark", "pincode", "state", "street"
+    )
     
     // MARK: - Public Methods
     
@@ -92,26 +108,66 @@ object DataMasker {
 
     /**
      * Sanitizes request/response body for safe logging.
-     * Masks tokens and truncates long bodies to avoid PII exposure.
+     * Masks tokens and user PII (email, phone, OTP, name, address fields),
+     * and truncates long bodies.
      */
     fun sanitizeForLogging(body: String?): String? {
         if (body.isNullOrEmpty()) return body
         return try {
             var sanitized = body
             // Mask JWT-like tokens in JSON (e.g. "token":"eyJ...")
-            val tokenInJson = Regex("(\"(?:token|access_token|accessToken)\"\\s*:\\s*)\"([^\"]+)\"")
-            sanitized = tokenInJson.replace(sanitized) { match ->
-                "${match.groupValues[1]}\"${maskToken(match.groupValues[2])}\""
-            }
+            sanitized = maskJsonStringFields(sanitized, setOf("token", "access_token", "accessToken")) { maskToken(it) }
             // Mask Bearer tokens
             val bearerPattern = Regex("(Bearer\\s+)([A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+){2})")
             sanitized = bearerPattern.replace(sanitized) { match ->
                 "${match.groupValues[1]}${maskToken(match.groupValues[2])}"
             }
+            // Mask PII fields
+            sanitized = maskJsonStringFields(sanitized, FULLY_MASKED_KEYS) { "***" }
+            sanitized = maskJsonStringFields(sanitized, EMAIL_KEYS) { maskEmail(it) }
+            sanitized = maskJsonStringFields(sanitized, PHONE_KEYS) { maskKeepingLast(it, 2) }
+            sanitized = maskJsonStringFields(sanitized, NAME_AND_ADDRESS_KEYS) { maskKeepingFirst(it, 1) }
             if (sanitized.length > 500) sanitized.take(500) + "..." else sanitized
         } catch (e: Exception) {
             if (is_debug_enabled) Log.w(TAG, "sanitizeForLogging failed: ${e.message}")
             "[truncated]"
         }
+    }
+
+    // MARK: - Private helpers
+
+    /**
+     * Replaces the string value of every `"key": "value"` pair whose key is in [keys]
+     * with `mask(value)`, leaving empty values untouched.
+     */
+    private fun maskJsonStringFields(json: String, keys: Set<String>, mask: (String) -> String): String {
+        if (keys.isEmpty()) return json
+        val keyPattern = keys.joinToString("|") { Regex.escape(it) }
+        val regex = Regex("(\"(?:$keyPattern)\"\\s*:\\s*)\"([^\"]*)\"")
+        return regex.replace(json) { match ->
+            val value = match.groupValues[2]
+            if (value.isEmpty()) match.value else "${match.groupValues[1]}\"${mask(value)}\""
+        }
+    }
+
+    /** Masks all but the first [keep] characters, e.g. "John" -> "J***". */
+    private fun maskKeepingFirst(value: String, keep: Int): String {
+        if (value.length <= keep) return MASKING_CHARACTER.repeat(value.length)
+        return value.take(keep) + MASKING_CHARACTER.repeat(3)
+    }
+
+    /** Masks all but the last [keep] characters, e.g. "9876543210" -> "********10". */
+    private fun maskKeepingLast(value: String, keep: Int): String {
+        if (value.length <= keep) return MASKING_CHARACTER.repeat(value.length)
+        return MASKING_CHARACTER.repeat(value.length - keep) + value.takeLast(keep)
+    }
+
+    /** Masks the local part of an email, keeping the first character and the domain, e.g. "jane@x.com" -> "j***@x.com". */
+    private fun maskEmail(value: String): String {
+        val atIndex = value.indexOf('@')
+        if (atIndex <= 0) return maskKeepingFirst(value, 1)
+        val localPart = value.substring(0, atIndex)
+        val domainPart = value.substring(atIndex)
+        return maskKeepingFirst(localPart, 1) + domainPart
     }
 }
